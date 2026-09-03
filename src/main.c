@@ -6,6 +6,8 @@
 
 #include <dspmodule.h>
 
+#include <al.h>
+
 const unsigned short dspmodule_requiredAPIversion = 1;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
