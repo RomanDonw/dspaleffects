@@ -135,13 +135,19 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         intlvaudio[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0);
     
     ALint procbuffs, queuedbuffs;
-    ALuint emptybuff = 0;
     alGetSourcei(source, AL_BUFFERS_PROCESSED, &procbuffs);
     alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedbuffs);
-    if (procbuffs > 0) alSourceUnqueueBuffers(source, 1, &emptybuff);
-    else if (queuedbuffs < BUFFERSCOUNT) emptybuff = buffers[queuedbuffs];
-    if (emptybuff)
+
+    ALuint emptybuff;
+    while (procbuffs-- > 0)
     {
+        alSourceUnqueueBuffers(source, 1, &emptybuff);
+        alBufferData(emptybuff, AL_FORMAT_STEREO_FLOAT32, intlvaudio, intlvaudiosize, rate);
+        alSourceQueueBuffers(source, 1, &emptybuff);
+    }
+    while (queuedbuffs < BUFFERSCOUNT)
+    {
+        emptybuff = buffers[queuedbuffs++];
         alBufferData(emptybuff, AL_FORMAT_STEREO_FLOAT32, intlvaudio, intlvaudiosize, rate);
         alSourceQueueBuffers(source, 1, &emptybuff);
     }
