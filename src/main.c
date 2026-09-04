@@ -36,10 +36,23 @@ static ALuint slot, buffers[BUFFERSCOUNT], source;
 
 static float origgain = 1, reverbgain = 1;
 
-#define GETOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &obj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (json_getfloat(obj, &v)) { puts("parsing \"" strname "\" option failed"); return 1; }\
-    alEffectf(effect, alname, v);
+/*
+#define GETFLTVEC3CONFOPTHELPER(strname, alname) \
+    if (!json_object_object_get_ex(configroot, strname, &tmp2_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    \
+    if (json_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+    alEffectf(effect, alname, *tmp_floats);
+*/
+
+#define GETFLTCONFOPTHELPER(strname, alname) \
+    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (json_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+    alEffectf(effect, alname, *tmp_floats);
+
+#define GETBOOLCONFOPTHELPER(strname, alname) \
+    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (json_getbool(tmp_jobj, &tmp_bool)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
+    alEffecti(effect, alname, tmp_bool);
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
@@ -172,36 +185,34 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     if (configfilename)
     {
-        float v;
-        struct json_object *obj;
+        bool tmp_bool;
+        float tmp_floats[3];
+        struct json_object *tmp_jobj, *tmp2_jobj;
 
-        GETOPTHELPER("density", AL_EAXREVERB_DENSITY);
-        GETOPTHELPER("diffusion", AL_EAXREVERB_DIFFUSION);
-        GETOPTHELPER("gain", AL_EAXREVERB_GAIN);
-        GETOPTHELPER("gainHF", AL_EAXREVERB_GAINHF);
-        GETOPTHELPER("gainLF", AL_EAXREVERB_GAINLF);
-        GETOPTHELPER("decayTime", AL_EAXREVERB_DECAY_TIME);
-        GETOPTHELPER("decayHFRatio", AL_EAXREVERB_DECAY_HFRATIO);
-        GETOPTHELPER("decayLFRatio", AL_EAXREVERB_DECAY_LFRATIO);
-        GETOPTHELPER("reflectionsDelay", AL_EAXREVERB_REFLECTIONS_DELAY);
-        GETOPTHELPER("reflectionsGain", AL_EAXREVERB_REFLECTIONS_GAIN);
+        GETFLTCONFOPTHELPER("density", AL_EAXREVERB_DENSITY);
+        GETFLTCONFOPTHELPER("diffusion", AL_EAXREVERB_DIFFUSION);
+        GETFLTCONFOPTHELPER("gain", AL_EAXREVERB_GAIN);
+        GETFLTCONFOPTHELPER("gainHF", AL_EAXREVERB_GAINHF);
+        GETFLTCONFOPTHELPER("gainLF", AL_EAXREVERB_GAINLF);
+        GETFLTCONFOPTHELPER("decayTime", AL_EAXREVERB_DECAY_TIME);
+        GETFLTCONFOPTHELPER("decayHFRatio", AL_EAXREVERB_DECAY_HFRATIO);
+        GETFLTCONFOPTHELPER("decayLFRatio", AL_EAXREVERB_DECAY_LFRATIO);
+        GETFLTCONFOPTHELPER("reflectionsDelay", AL_EAXREVERB_REFLECTIONS_DELAY);
+        GETFLTCONFOPTHELPER("reflectionsGain", AL_EAXREVERB_REFLECTIONS_GAIN);
         // relf. pan.
-        GETOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
-        GETOPTHELPER("lateReverbGain", AL_EAXREVERB_LATE_REVERB_GAIN);
+        GETFLTCONFOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
+        GETFLTCONFOPTHELPER("lateReverbGain", AL_EAXREVERB_LATE_REVERB_GAIN);
         // late reverb. pan.
-        GETOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
-        GETOPTHELPER("echoDepth", AL_EAXREVERB_ECHO_DEPTH);
-        GETOPTHELPER("echoTime", AL_EAXREVERB_ECHO_TIME);
-        GETOPTHELPER("modulationDepth", AL_EAXREVERB_MODULATION_DEPTH);
-        GETOPTHELPER("modulationTime", AL_EAXREVERB_MODULATION_TIME);
-        GETOPTHELPER("airAbsorptionGainHF", AL_EAXREVERB_AIR_ABSORPTION_GAINHF);
-        GETOPTHELPER("HFReference", AL_EAXREVERB_HFREFERENCE);
-        GETOPTHELPER("LFReference", AL_EAXREVERB_LFREFERENCE);
-        GETOPTHELPER("roomRolloffFactor", AL_EAXREVERB_ROOM_ROLLOFF_FACTOR);
-
-        /*
-        alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
-        */
+        GETFLTCONFOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
+        GETFLTCONFOPTHELPER("echoDepth", AL_EAXREVERB_ECHO_DEPTH);
+        GETFLTCONFOPTHELPER("echoTime", AL_EAXREVERB_ECHO_TIME);
+        GETFLTCONFOPTHELPER("modulationDepth", AL_EAXREVERB_MODULATION_DEPTH);
+        GETFLTCONFOPTHELPER("modulationTime", AL_EAXREVERB_MODULATION_TIME);
+        GETFLTCONFOPTHELPER("airAbsorptionGainHF", AL_EAXREVERB_AIR_ABSORPTION_GAINHF);
+        GETFLTCONFOPTHELPER("HFReference", AL_EAXREVERB_HFREFERENCE);
+        GETFLTCONFOPTHELPER("LFReference", AL_EAXREVERB_LFREFERENCE);
+        GETFLTCONFOPTHELPER("roomRolloffFactor", AL_EAXREVERB_ROOM_ROLLOFF_FACTOR);
+        GETBOOLCONFOPTHELPER("decayHFLimit", AL_EAXREVERB_DECAY_HFLIMIT);
     }
 
     // ===============================
