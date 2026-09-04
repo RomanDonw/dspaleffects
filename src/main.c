@@ -120,7 +120,33 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alGenEffects(1, &effect);
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
 
-    static const EFXEAXREVERBPROPERTIES preset = EFX_REVERB_PRESET_HANGAR;
+    static const EFXEAXREVERBPROPERTIES preset = EFX_REVERB_PRESET_SEWERPIPE;
+    /*
+    alEffectf(effect, AL_EAXREVERB_DENSITY, 1);
+    alEffectf(effect, AL_EAXREVERB_DIFFUSION, 1);
+    alEffectf(effect, AL_EAXREVERB_GAIN, 1);
+    alEffectf(effect, AL_EAXREVERB_GAINHF, 0.9);
+    alEffectf(effect, AL_EAXREVERB_GAINLF, 0.1);
+    alEffectf(effect, AL_EAXREVERB_DECAY_TIME, 3);
+    alEffectf(effect, AL_EAXREVERB_DECAY_HFRATIO, 1);
+    alEffectf(effect, AL_EAXREVERB_DECAY_LFRATIO, 0.2);
+    alEffectf(effect, AL_EAXREVERB_REFLECTIONS_GAIN, preset.flReflectionsGain);
+    alEffectf(effect, AL_EAXREVERB_REFLECTIONS_DELAY, preset.flReflectionsDelay);
+    //alEffectfv(effect, AL_EAXREVERB_REFLECTIONS_PAN, preset.flReflectionsPan);
+    alEffectf(effect, AL_EAXREVERB_LATE_REVERB_GAIN, 1);
+    alEffectf(effect, AL_EAXREVERB_LATE_REVERB_DELAY, preset.flLateReverbDelay);
+    //alEffectfv(effect, AL_EAXREVERB_LATE_REVERB_PAN, preset.flLateReverbPan);
+    alEffectf(effect, AL_EAXREVERB_ECHO_TIME, preset.flEchoTime);
+    alEffectf(effect, AL_EAXREVERB_ECHO_DEPTH, preset.flEchoDepth);
+    alEffectf(effect, AL_EAXREVERB_MODULATION_TIME, preset.flModulationTime);
+    alEffectf(effect, AL_EAXREVERB_MODULATION_DEPTH, preset.flModulationDepth);
+    alEffectf(effect, AL_EAXREVERB_AIR_ABSORPTION_GAINHF, preset.flAirAbsorptionGainHF);
+    alEffectf(effect, AL_EAXREVERB_HFREFERENCE, preset.flHFReference);
+    alEffectf(effect, AL_EAXREVERB_LFREFERENCE, preset.flLFReference);
+    alEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, preset.flRoomRolloffFactor);
+    alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
+    */
+
     alEffectf(effect, AL_EAXREVERB_DENSITY, preset.flDensity);
     alEffectf(effect, AL_EAXREVERB_DIFFUSION, preset.flDiffusion);
     alEffectf(effect, AL_EAXREVERB_GAIN, preset.flGain);
@@ -144,7 +170,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alEffectf(effect, AL_EAXREVERB_LFREFERENCE, preset.flLFReference);
     alEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, preset.flRoomRolloffFactor);
     alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
-
     
     alGenAuxiliaryEffectSlots(1, &slot);
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
