@@ -6,6 +6,7 @@
 
 #include <dspmodule.h>
 
+#include <getopt.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +26,27 @@ static ALCcontext *alctx;
 #define BUFFERSCOUNT 2
 static ALuint slot, buffers[BUFFERSCOUNT], source;
 
+static float origgain = 1, reverbgain = 1;
+
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
+    {
+        int p;
+        while ((p = getopt(argc, argv, "v:V:")) != -1)
+        {
+            switch (p)
+            {
+                case 'v':
+                    if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -v"); return 1; }
+                    break;
+
+                case 'V':
+                    if (sscanf(optarg, "%f", &reverbgain) < 1) { puts("error parsing option -V"); return 1; }
+                    break;
+            }
+        }
+    }
+
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
     { puts("required ALC_SOFT_loopback OpenAL extension doesn't supported on this platform"); return 1; }
     if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
@@ -69,6 +89,16 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!alEffectf) { puts("failed to load alEffectf OpenAL function"); return 1; }
     LPALEFFECTFV alEffectfv = alGetProcAddress("alEffectfv");
     if (!alEffectfv) { puts("failed to load alEffectfv OpenAL function"); return 1; }
+
+    LPALGENFILTERS alGenFilters = alGetProcAddress("alGenFilters");
+    if (!alGenFilters) { puts("failed to load alGenFilters OpenAL function"); return 1; }
+    LPALDELETEFILTERS alDeleteFilters = alGetProcAddress("alDeleteFilters");
+    if (!alDeleteFilters) { puts("failed to load alDeleteFilters OpenAL function"); return 1; }
+
+    LPALFILTERI alFilteri = alGetProcAddress("alFilteri");
+    if (!alFilteri) { puts("failed to load alFilteri OpenAL function"); return 1; }
+    LPALFILTERF alFilterf = alGetProcAddress("alFilterf");
+    if (!alFilterf) { puts("failed to load alFilterf OpenAL function"); return 1; }
 
     // ===============================
 
@@ -114,20 +144,32 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alEffectf(effect, AL_EAXREVERB_LFREFERENCE, preset.flLFReference);
     alEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, preset.flRoomRolloffFactor);
     alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
+
     
     alGenAuxiliaryEffectSlots(1, &slot);
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
+    
+    ALuint filter;
+    alGenFilters(1, &filter);
+    alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+    alFilterf(filter, AL_LOWPASS_GAINHF, 1);
+    alFilterf(filter, AL_LOWPASS_GAIN, reverbgain);
 
     // ===============================
 
     alGenBuffers(BUFFERSCOUNT, buffers);
 
     alGenSources(1, &source);
-    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, AL_FILTER_NULL);
     alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
     alSourcei(source, AL_ROLLOFF_FACTOR, 0);
+    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
+
+    alFilterf(filter, AL_LOWPASS_GAIN, origgain);
+    alSourcei(source, AL_DIRECT_FILTER, filter);
+    alDeleteFilters(1, &filter);
     
+    printf("origgain: %f\nreverbgain: %f\n", origgain, reverbgain);
     *sysname = "eaxreverb";
     *dispname = "OpenAL EAX Reverb.";
     return 0;
