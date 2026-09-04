@@ -67,7 +67,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     struct json_object *configroot;
     {
         int p;
-        while ((p = getopt(argc, argv, "v:V:")) != -1)
+        while ((p = getopt(argc, argv, "v:V:f:")) != -1)
         {
             switch (p)
             {

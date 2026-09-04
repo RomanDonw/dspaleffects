@@ -1,0 +1,23 @@
+{
+    "density": 1,
+    "diffusion": 1,
+    "gain": 1,
+    "gainHF": 0.9,
+    "gainLF": 0.1,
+    "decayTime": 3,
+    "decayHFRatio": 1,
+    "decayLFRatio": 0.2,
+    "reflectionsGain": 0.2472,
+    "reflectionsDelay": 0.013,
+    "lateReverbGain": 1,
+    "lateReverbDelay": 0.02,
+    "echoTime": 0.25,
+    "echoDepth": 0,
+    "modulationTime": 0.25,
+    "modulationDepth": 0,
+    "airAbsorptionGainHF": 0.9943,
+    "HFReference": 5000,
+    "LFReference": 250,
+    "roomRolloffFactor": 0,
+    "decayHFLimit": true
+}
