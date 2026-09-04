@@ -10,11 +10,19 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <al.h>
 #include <alc.h>
 #include <alext.h>
 #include <efx-presets.h>
+
+#include <AL/alext.h>
+
+#include <json-c/json_object.h>
+#include <json-c/json_tokener.h>
+
+#include "jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
 
@@ -28,8 +36,22 @@ static ALuint slot, buffers[BUFFERSCOUNT], source;
 
 static float origgain = 1, reverbgain = 1;
 
+#define GETOPTHELPER(strname, alname) \
+    if (!json_object_object_get_ex(configroot, strname, &obj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (json_getfloat(obj, &v)) { puts("parsing \"" strname "\" option failed"); return 1; }\
+    alEffectf(effect, alname, v);
+
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
+    if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
+    { puts("required ALC_SOFT_loopback OpenAL extension doesn't supported on this platform"); return 1; }
+    if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
+    { puts("required ALC_EXT_EFX OpenAL extension (OpenAL EFX) doesn't supported on this platform"); return 1; }
+
+    // ===============================
+    
+    const char *configfilename = NULL;
+    struct json_object *configroot;
     {
         int p;
         while ((p = getopt(argc, argv, "v:V:")) != -1)
@@ -38,20 +60,48 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             {
                 case 'v':
                     if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -v"); return 1; }
+                    origgain = clampf(origgain, 0, 1);
                     break;
 
                 case 'V':
                     if (sscanf(optarg, "%f", &reverbgain) < 1) { puts("error parsing option -V"); return 1; }
+                    reverbgain = clampf(reverbgain, 0, 1);
                     break;
+
+                case 'f':
+                {
+                    FILE *f = fopen(optarg, "r");
+                    if (!f) { puts("unable to open config file"); return 1; }
+
+                    if (fseek(f, 0, SEEK_END)) { puts("failed to seek to end of config file"); goto errorquit_afterfopen; }
+                    long size = ftell(f);
+                    if (size < 0) { puts("failed to tell size of config file"); goto errorquit_afterfopen; }
+                    if (fseek(f, 0, SEEK_SET)) { puts("failed to seek to start of config file"); goto errorquit_afterfopen; }
+
+                    char *contents = malloc(size + 1);
+                    if (!contents) { puts("memory allocation failed"); goto errorquit_afterfopen; }
+                    bool success = fread(contents, size, 1, f);
+                    fclose(f);
+                    if (!success) { puts("failed reading config file"); goto errorquit_afteralloc; }
+                    contents[size] = '\0';
+
+                    enum json_tokener_error jerr;
+                    configroot = json_tokener_parse_verbose(contents, &jerr);
+                    free(contents);
+                    if (jerr != json_tokener_success) { printf("JSON parsing error: %s\n", json_tokener_error_desc(jerr)); return 1; }
+
+                    configfilename = optarg;
+                    break;
+                    errorquit_afteralloc:
+                        free(contents);
+                    errorquit_afterfopen:
+                        fclose(f);
+                    return 1;
+                }
             }
         }
     }
-
-    if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
-    { puts("required ALC_SOFT_loopback OpenAL extension doesn't supported on this platform"); return 1; }
-    if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
-    { puts("required ALC_EXT_EFX OpenAL extension (OpenAL EFX) doesn't supported on this platform"); return 1; }
-
+    
     // ===============================
 
     if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
@@ -120,56 +170,41 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alGenEffects(1, &effect);
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
 
-    static const EFXEAXREVERBPROPERTIES preset = EFX_REVERB_PRESET_SEWERPIPE;
-    /*
-    alEffectf(effect, AL_EAXREVERB_DENSITY, 1);
-    alEffectf(effect, AL_EAXREVERB_DIFFUSION, 1);
-    alEffectf(effect, AL_EAXREVERB_GAIN, 1);
-    alEffectf(effect, AL_EAXREVERB_GAINHF, 0.9);
-    alEffectf(effect, AL_EAXREVERB_GAINLF, 0.1);
-    alEffectf(effect, AL_EAXREVERB_DECAY_TIME, 3);
-    alEffectf(effect, AL_EAXREVERB_DECAY_HFRATIO, 1);
-    alEffectf(effect, AL_EAXREVERB_DECAY_LFRATIO, 0.2);
-    alEffectf(effect, AL_EAXREVERB_REFLECTIONS_GAIN, preset.flReflectionsGain);
-    alEffectf(effect, AL_EAXREVERB_REFLECTIONS_DELAY, preset.flReflectionsDelay);
-    //alEffectfv(effect, AL_EAXREVERB_REFLECTIONS_PAN, preset.flReflectionsPan);
-    alEffectf(effect, AL_EAXREVERB_LATE_REVERB_GAIN, 1);
-    alEffectf(effect, AL_EAXREVERB_LATE_REVERB_DELAY, preset.flLateReverbDelay);
-    //alEffectfv(effect, AL_EAXREVERB_LATE_REVERB_PAN, preset.flLateReverbPan);
-    alEffectf(effect, AL_EAXREVERB_ECHO_TIME, preset.flEchoTime);
-    alEffectf(effect, AL_EAXREVERB_ECHO_DEPTH, preset.flEchoDepth);
-    alEffectf(effect, AL_EAXREVERB_MODULATION_TIME, preset.flModulationTime);
-    alEffectf(effect, AL_EAXREVERB_MODULATION_DEPTH, preset.flModulationDepth);
-    alEffectf(effect, AL_EAXREVERB_AIR_ABSORPTION_GAINHF, preset.flAirAbsorptionGainHF);
-    alEffectf(effect, AL_EAXREVERB_HFREFERENCE, preset.flHFReference);
-    alEffectf(effect, AL_EAXREVERB_LFREFERENCE, preset.flLFReference);
-    alEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, preset.flRoomRolloffFactor);
-    alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
-    */
+    if (configfilename)
+    {
+        float v;
+        struct json_object *obj;
 
-    alEffectf(effect, AL_EAXREVERB_DENSITY, preset.flDensity);
-    alEffectf(effect, AL_EAXREVERB_DIFFUSION, preset.flDiffusion);
-    alEffectf(effect, AL_EAXREVERB_GAIN, preset.flGain);
-    alEffectf(effect, AL_EAXREVERB_GAINHF, preset.flGainHF);
-    alEffectf(effect, AL_EAXREVERB_GAINLF, preset.flGainLF);
-    alEffectf(effect, AL_EAXREVERB_DECAY_TIME, preset.flDecayTime);
-    alEffectf(effect, AL_EAXREVERB_DECAY_HFRATIO, preset.flDecayHFRatio);
-    alEffectf(effect, AL_EAXREVERB_DECAY_LFRATIO, preset.flDecayLFRatio);
-    alEffectf(effect, AL_EAXREVERB_REFLECTIONS_GAIN, preset.flReflectionsGain);
-    alEffectf(effect, AL_EAXREVERB_REFLECTIONS_DELAY, preset.flReflectionsDelay);
-    alEffectfv(effect, AL_EAXREVERB_REFLECTIONS_PAN, preset.flReflectionsPan);
-    alEffectf(effect, AL_EAXREVERB_LATE_REVERB_GAIN, preset.flLateReverbGain);
-    alEffectf(effect, AL_EAXREVERB_LATE_REVERB_DELAY, preset.flLateReverbDelay);
-    alEffectfv(effect, AL_EAXREVERB_LATE_REVERB_PAN, preset.flLateReverbPan);
-    alEffectf(effect, AL_EAXREVERB_ECHO_TIME, preset.flEchoTime);
-    alEffectf(effect, AL_EAXREVERB_ECHO_DEPTH, preset.flEchoDepth);
-    alEffectf(effect, AL_EAXREVERB_MODULATION_TIME, preset.flModulationTime);
-    alEffectf(effect, AL_EAXREVERB_MODULATION_DEPTH, preset.flModulationDepth);
-    alEffectf(effect, AL_EAXREVERB_AIR_ABSORPTION_GAINHF, preset.flAirAbsorptionGainHF);
-    alEffectf(effect, AL_EAXREVERB_HFREFERENCE, preset.flHFReference);
-    alEffectf(effect, AL_EAXREVERB_LFREFERENCE, preset.flLFReference);
-    alEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, preset.flRoomRolloffFactor);
-    alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
+        GETOPTHELPER("density", AL_EAXREVERB_DENSITY);
+        GETOPTHELPER("diffusion", AL_EAXREVERB_DIFFUSION);
+        GETOPTHELPER("gain", AL_EAXREVERB_GAIN);
+        GETOPTHELPER("gainHF", AL_EAXREVERB_GAINHF);
+        GETOPTHELPER("gainLF", AL_EAXREVERB_GAINLF);
+        GETOPTHELPER("decayTime", AL_EAXREVERB_DECAY_TIME);
+        GETOPTHELPER("decayHFRatio", AL_EAXREVERB_DECAY_HFRATIO);
+        GETOPTHELPER("decayLFRatio", AL_EAXREVERB_DECAY_LFRATIO);
+        GETOPTHELPER("reflectionsDelay", AL_EAXREVERB_REFLECTIONS_DELAY);
+        GETOPTHELPER("reflectionsGain", AL_EAXREVERB_REFLECTIONS_GAIN);
+        // relf. pan.
+        GETOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
+        GETOPTHELPER("lateReverbGain", AL_EAXREVERB_LATE_REVERB_GAIN);
+        // late reverb. pan.
+        GETOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
+        GETOPTHELPER("echoDepth", AL_EAXREVERB_ECHO_DEPTH);
+        GETOPTHELPER("echoTime", AL_EAXREVERB_ECHO_TIME);
+        GETOPTHELPER("modulationDepth", AL_EAXREVERB_MODULATION_DEPTH);
+        GETOPTHELPER("modulationTime", AL_EAXREVERB_MODULATION_TIME);
+        GETOPTHELPER("airAbsorptionGainHF", AL_EAXREVERB_AIR_ABSORPTION_GAINHF);
+        GETOPTHELPER("HFReference", AL_EAXREVERB_HFREFERENCE);
+        GETOPTHELPER("LFReference", AL_EAXREVERB_LFREFERENCE);
+        GETOPTHELPER("roomRolloffFactor", AL_EAXREVERB_ROOM_ROLLOFF_FACTOR);
+
+        /*
+        alEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, preset.iDecayHFLimit);
+        */
+    }
+
+    // ===============================
     
     alGenAuxiliaryEffectSlots(1, &slot);
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
@@ -180,8 +215,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     alFilterf(filter, AL_LOWPASS_GAINHF, 1);
     alFilterf(filter, AL_LOWPASS_GAIN, reverbgain);
-
-    // ===============================
 
     alGenBuffers(BUFFERSCOUNT, buffers);
 
@@ -195,6 +228,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alDeleteFilters(1, &filter);
     
     printf("origgain: %f\nreverbgain: %f\n", origgain, reverbgain);
+    if (configfilename) printf("configfilename: %s\n", configfilename);
+    else puts("config file not specified");
     *sysname = "eaxreverb";
     *dispname = "OpenAL EAX Reverb.";
     return 0;
