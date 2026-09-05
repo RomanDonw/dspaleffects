@@ -36,13 +36,20 @@ static ALuint slot, buffers[BUFFERSCOUNT], source;
 
 static float origgain = 1, reverbgain = 1;
 
-/*
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &tmp2_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (json_object_get_type(tmp2_jobj) != json_type_array) { puts("value by key \"" strname "\" must have an array type"); return 1; }\
     \
-    if (json_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
-    alEffectf(effect, alname, *tmp_floats);
-*/
+    if (!(tmp_jobj = json_object_array_get_idx(tmp2_jobj, 0))) { puts("unable to get value by index 0 in array with key \"" strname "\""); return 1; }\
+    if (json_getfloat(tmp_jobj, tmp_floats)) { puts("unable to get parse by index 0 in array with key \"" strname "\" (required float)"); return 1; }\
+    \
+    if (!(tmp_jobj = json_object_array_get_idx(tmp2_jobj, 1))) { puts("unable to get value by index 1 in array with key \"" strname "\""); return 1; }\
+    if (json_getfloat(tmp_jobj, tmp_floats + 1)) { puts("unable to get parse by index 1 in array with key \"" strname "\" (required float)"); return 1; }\
+    \
+    if (!(tmp_jobj = json_object_array_get_idx(tmp2_jobj, 2))) { puts("unable to get value by index 2 in array with key \"" strname "\""); return 2; }\
+    if (json_getfloat(tmp_jobj, tmp_floats + 2)) { puts("unable to get parse by index 2 in array with key \"" strname "\" (required float)"); return 2; }\
+    \
+    alEffectfv(effect, alname, tmp_floats);
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
@@ -199,10 +206,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         GETFLTCONFOPTHELPER("decayLFRatio", AL_EAXREVERB_DECAY_LFRATIO);
         GETFLTCONFOPTHELPER("reflectionsDelay", AL_EAXREVERB_REFLECTIONS_DELAY);
         GETFLTCONFOPTHELPER("reflectionsGain", AL_EAXREVERB_REFLECTIONS_GAIN);
-        // relf. pan.
+        GETFLTVEC3CONFOPTHELPER("reflectionsPan", AL_EAXREVERB_REFLECTIONS_PAN);
         GETFLTCONFOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
         GETFLTCONFOPTHELPER("lateReverbGain", AL_EAXREVERB_LATE_REVERB_GAIN);
-        // late reverb. pan.
+        GETFLTVEC3CONFOPTHELPER("lateReverbPan", AL_EAXREVERB_LATE_REVERB_PAN);
         GETFLTCONFOPTHELPER("lateReverbDelay", AL_EAXREVERB_LATE_REVERB_DELAY);
         GETFLTCONFOPTHELPER("echoDepth", AL_EAXREVERB_ECHO_DEPTH);
         GETFLTCONFOPTHELPER("echoTime", AL_EAXREVERB_ECHO_TIME);
