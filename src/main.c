@@ -108,7 +108,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     enum json_tokener_error jerr;
                     configroot = json_tokener_parse_verbose(contents, &jerr);
                     free(contents);
-                    if (jerr != json_tokener_success) { printf("JSON parsing error: %s\n", json_tokener_error_desc(jerr)); return 1; }
+                    if (jerr != json_tokener_success) { printf("JSON parsing error: %s\n", json_tokener_error_desc(jerr)); goto errorquit_afteralloc;  }
 
                     configfilename = optarg;
                     break;
