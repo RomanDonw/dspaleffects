@@ -74,17 +74,17 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     struct json_object *configroot;
     {
         int p;
-        while ((p = getopt(argc, argv, "v:V:f:")) != -1)
+        while ((p = getopt(argc, argv, "g:G:f:")) != -1)
         {
             switch (p)
             {
-                case 'v':
-                    if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -v"); return 1; }
+                case 'g':
+                    if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -g"); return 1; }
                     origgain = clampf(origgain, 0, 1);
                     break;
 
-                case 'V':
-                    if (sscanf(optarg, "%f", &reverbgain) < 1) { puts("error parsing option -V"); return 1; }
+                case 'G':
+                    if (sscanf(optarg, "%f", &reverbgain) < 1) { puts("error parsing option -G"); return 1; }
                     reverbgain = clampf(reverbgain, 0, 1);
                     break;
 
