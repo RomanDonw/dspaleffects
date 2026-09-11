@@ -17,8 +17,6 @@
 #include <alext.h>
 #include <efx-presets.h>
 
-#include <AL/alext.h>
-
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 
@@ -27,14 +25,13 @@
 const unsigned short dspmodule_requiredAPIversion = 1;
 
 static void *inleftport, *inrightport, *outleftport, *outrightport;
+static float origgain = 1, reverbgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 
 static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
 static ALCdevice *aldev;
 static ALCcontext *alctx;
 #define BUFFERSCOUNT 2
 static ALuint slot, buffers[BUFFERSCOUNT], source;
-
-static float origgain = 1, reverbgain = 1;
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &tmp2_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
@@ -74,10 +71,26 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     struct json_object *configroot;
     {
         int p;
-        while ((p = getopt(argc, argv, "g:G:f:")) != -1)
+        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:")) != -1)
         {
             switch (p)
             {
+                case 'a':
+                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a"); return 1; }
+                    break;
+
+                case 'A':
+                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A"); return 1; }
+                    break;
+
+                case 'v':
+                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v"); return 1; }
+                    break;
+
+                case 'V':
+                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V"); return 1; }
+                    break;
+
                 case 'g':
                     if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -g"); return 1; }
                     origgain = clampf(origgain, 0, 1);
@@ -245,7 +258,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alSourcei(source, AL_DIRECT_FILTER, filter);
     alDeleteFilters(1, &filter);
     
-    printf("origgain: %f\nreverbgain: %f\n", origgain, reverbgain);
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nreverbgain: %f\noutampmod: %f\noutvolmod: %f\n",
+        inampmod, involmod, origgain, reverbgain, outampmod, outvolmod);
     if (configfilename) printf("configfilename: %s\n", configfilename);
     else puts("config file not specified");
     *sysname = "eaxreverb";
@@ -275,7 +289,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     }
 
     for (size_t i = 0; i < (size_t)duration << 1; i++)
-        intlvaudio[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0);
+        intlvaudio[i] = adjf(i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0), inampmod) * involmod;
     
     ALint procbuffs, queuedbuffs;
     alGetSourcei(source, AL_BUFFERS_PROCESSED, &procbuffs);
@@ -303,8 +317,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     
     for (size_t i = 0; i < (size_t)duration << 1; i++)
     {
-        if (i & 1 && outright) outright[i >> 1] = intlvaudio[i];
-        else if (outleft) outleft[i >> 1] = intlvaudio[i];
+        if (i & 1 && outright) outright[i >> 1] = adjf(intlvaudio[i], outampmod) * outvolmod;
+        else if (outleft) outleft[i >> 1] = adjf(intlvaudio[i], outampmod) * outvolmod;
     }
 
     return 0;
