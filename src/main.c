@@ -28,7 +28,11 @@ static void *inleftport, *inrightport, *outleftport, *outrightport;
 static float origgain = 1, reverbgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 
 static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
+static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
+
 static ALCdevice *aldev;
+#define ALDEV_DEFAULTFREQUENCY 48000
+static unsigned long aldev_currfreq = ALDEV_DEFAULTFREQUENCY;
 static ALCcontext *alctx;
 #define BUFFERSCOUNT 2
 static ALuint slot, buffers[BUFFERSCOUNT], source;
@@ -61,9 +65,11 @@ static ALuint slot, buffers[BUFFERSCOUNT], source;
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
-    { puts("required ALC_SOFT_loopback OpenAL extension doesn't supported on this platform"); return 1; }
+    { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
     if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
-    { puts("required ALC_EXT_EFX OpenAL extension (OpenAL EFX) doesn't supported on this platform"); return 1; }
+    { puts("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported on this platform"); return 1; }
+    //if (!alIsExtensionPresent("AL_EXT_float32"))
+    //{ puts("required \"AL_EXT_float32\" OpenAL extension doesn't supported on this platform"); return 1; }
 
     // ===============================
     
@@ -153,6 +159,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!alcLoopbackOpenDeviceSOFT) { puts("failed to dynamicly load alcLoopbackOpenDeviceSOFT OpenAL function"); return 1; }
     if (!(alcRenderSamplesSOFT = alcGetProcAddress(NULL, "alcRenderSamplesSOFT")))
     { puts("failed to dynamicly load alcRenderSamplesSOFT OpenAL function"); return 1; }
+    if (!(alcResetDeviceSOFT = alcGetProcAddress(NULL, "alcResetDeviceSOFT")))
+    { puts("failed to dynamicly load alcResetDeviceSOFT OpenAL function"); return 1; }
     
     LPALGENEFFECTS alGenEffects = alGetProcAddress("alGenEffects");
     if (!alGenEffects) { puts("failed to load alGenEffects OpenAL function"); return 1; }
@@ -191,7 +199,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     {
         ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
         ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
-        ALC_FREQUENCY, 48000,
+        ALC_FREQUENCY, ALDEV_DEFAULTFREQUENCY,
         0
     };
     if (!(alctx = alcCreateContext(aldev, attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
@@ -269,7 +277,19 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
-    if (rate != 48000) { puts("sample rate isn't equal to fixed 48000 Hz. stopping..."); return 1; }
+    if (rate != aldev_currfreq)
+    {
+        if (rate > INT32_MAX) { printf("new sample rate is too large (new: %lu, max.: 2 ^ 31 - 1)\n", rate); return 1; }   
+        ALCint attrs[] =
+        {
+            ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+            ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
+            ALC_FREQUENCY, rate,
+            0
+        };
+        if (!alcResetDeviceSOFT(aldev, attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
+        aldev_currfreq = rate;
+    }
 
     float *outleft = lapi->getportbuffer(outleftport, duration);
     float *outright = lapi->getportbuffer(outrightport, duration);
