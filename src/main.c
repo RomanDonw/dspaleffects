@@ -290,20 +290,23 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         if (rate > INT32_MAX) { printf("new sample rate is too large (new: %lu, max.: 2 ^ 31 - 1)\n", rate); return 1; }
 
         alSourceStop(source);
-        ALint queuedbuffs;
-        ALuint buff;
-        alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedbuffs);
-        while (queuedbuffs-- > 0) alSourceUnqueueBuffers(source, 1, &buff);
-
-        ALCint attrs[] =
         {
-            ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
-            ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
-            ALC_FREQUENCY, rate,
-            0
-        };
-        if (!alcResetDeviceSOFT(aldev, attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
-        aldev_currfreq = rate;
+            ALint queuedbuffs;
+            alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedbuffs);
+            ALuint buff;
+            while (queuedbuffs-- > 0) alSourceUnqueueBuffers(source, 1, &buff);
+        }
+        {
+            ALCint attrs[] =
+            {
+                ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+                ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
+                ALC_FREQUENCY, rate,
+                0
+            };
+            if (!alcResetDeviceSOFT(aldev, attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
+            aldev_currfreq = rate;
+        }
         alSourcePlay(source);
         
         if (outleft) inleft ? memcpy(outleft, inleft, duration * sizeof(float)) : memset(outleft, 0, duration * sizeof(float));
