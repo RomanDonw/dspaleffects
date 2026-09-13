@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <al.h>
 #include <alc.h>
@@ -277,9 +278,23 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
+    float *outleft = lapi->getportbuffer(outleftport, duration);
+    float *outright = lapi->getportbuffer(outrightport, duration);
+    if (!(outleft || outright)) return 0;
+
+    const float *inleft = lapi->getportbuffer(inleftport, duration);
+    const float *inright = lapi->getportbuffer(inrightport, duration);
+
     if (rate != aldev_currfreq)
     {
-        if (rate > INT32_MAX) { printf("new sample rate is too large (new: %lu, max.: 2 ^ 31 - 1)\n", rate); return 1; }   
+        if (rate > INT32_MAX) { printf("new sample rate is too large (new: %lu, max.: 2 ^ 31 - 1)\n", rate); return 1; }
+
+        alSourceStop(source);
+        ALint queuedbuffs;
+        ALuint buff;
+        alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedbuffs);
+        while (queuedbuffs-- > 0) alSourceUnqueueBuffers(source, 1, &buff);
+
         ALCint attrs[] =
         {
             ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
@@ -289,14 +304,12 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         };
         if (!alcResetDeviceSOFT(aldev, attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
         aldev_currfreq = rate;
+        alSourcePlay(source);
+        
+        if (outleft) inleft ? memcpy(outleft, inleft, duration * sizeof(float)) : memset(outleft, 0, duration * sizeof(float));
+        if (outright) inright ? memcpy(outright, inright, duration * sizeof(float)) : memset(outright, 0, duration * sizeof(float));
+        return 0;
     }
-
-    float *outleft = lapi->getportbuffer(outleftport, duration);
-    float *outright = lapi->getportbuffer(outrightport, duration);
-    if (!(outleft || outright)) return 0;
-
-    const float *inleft = lapi->getportbuffer(inleftport, duration);
-    const float *inright = lapi->getportbuffer(inrightport, duration);
 
     static float *intlvaudio = NULL;
     static size_t intlvaudiosize = 0;
