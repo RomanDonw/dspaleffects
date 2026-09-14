@@ -296,11 +296,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
             ALuint buff;
             while (queuedbuffs-- > 0) alSourceUnqueueBuffers(source, 1, &buff);
         }
-        {
-            alctx_attrs[5] = rate;
-            if (!alcResetDeviceSOFT(aldev, alctx_attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
-        }
-        alSourcePlay(source);
+        alctx_attrs[5] = rate;
+        if (!alcResetDeviceSOFT(aldev, alctx_attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
         
         if (outleft) inleft ? memcpy(outleft, inleft, duration * sizeof(float)) : memset(outleft, 0, duration * sizeof(float));
         if (outright) inright ? memcpy(outright, inright, duration * sizeof(float)) : memset(outright, 0, duration * sizeof(float));
