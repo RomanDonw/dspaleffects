@@ -67,11 +67,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 {
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
     { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
-    if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
-    { puts("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported on this platform"); return 1; }
-    //if (!alIsExtensionPresent("AL_EXT_float32"))
-    //{ puts("required \"AL_EXT_float32\" OpenAL extension doesn't supported on this platform"); return 1; }
-
+    
     // ===============================
     
     const char *configfilename = NULL;
@@ -143,19 +139,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     }
     
     // ===============================
-
-    if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input left channel"); return 1; }
-    if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input right channel"); return 1; }
-
-    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output left channel"); return 1; }
-    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output right channel"); return 1; }
-
-    // ===============================
-
+    
     LPALCLOOPBACKOPENDEVICESOFT alcLoopbackOpenDeviceSOFT = alcGetProcAddress(NULL, "alcLoopbackOpenDeviceSOFT");
     if (!alcLoopbackOpenDeviceSOFT) { puts("failed to dynamicly load alcLoopbackOpenDeviceSOFT OpenAL function"); return 1; }
     if (!(alcRenderSamplesSOFT = alcGetProcAddress(NULL, "alcRenderSamplesSOFT")))
@@ -163,6 +147,27 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!(alcResetDeviceSOFT = alcGetProcAddress(NULL, "alcResetDeviceSOFT")))
     { puts("failed to dynamicly load alcResetDeviceSOFT OpenAL function"); return 1; }
     
+    // ===============================
+
+    if (!(aldev = alcLoopbackOpenDeviceSOFT(NULL))) { puts("error creating/opening OpenAL loopback device"); return 1; }
+    if (!alcIsExtensionPresent(aldev, "ALC_SOFT_output_limiter"))
+    { puts("required \"ALC_SOFT_output_limiter\" OpenAL extension doesn't supported by loopback device on this platform"); return 1; }
+    if (!alcIsExtensionPresent(aldev, "ALC_EXT_EFX"))
+    { puts("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported by loopback device on this platform"); return 1; }
+
+    ALCint attrs[] =
+    {
+        ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+        ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
+        ALC_FREQUENCY, ALDEV_DEFAULTFREQUENCY,
+        ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
+        0
+    };
+    if (!(alctx = alcCreateContext(aldev, attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
+    alcMakeContextCurrent(alctx);
+
+    // ===============================
+
     LPALGENEFFECTS alGenEffects = alGetProcAddress("alGenEffects");
     if (!alGenEffects) { puts("failed to load alGenEffects OpenAL function"); return 1; }
     LPALDELETEEFFECTS alDeleteEffects = alGetProcAddress("alDeleteEffects");
@@ -170,8 +175,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots = alGetProcAddress("alGenAuxiliaryEffectSlots");
     if (!alGenAuxiliaryEffectSlots) { puts("failed to load alGenAuxiliaryEffectSlots OpenAL function"); return 1; }
-    //LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots = alGetProcAddress("alDeleteAuxiliaryEffectSlots");
-    //if (!alDeleteAuxiliaryEffectSlots) { puts("failed to load alDeleteAuxiliaryEffectSlots OpenAL function"); return 1; }
     LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti = alGetProcAddress("alAuxiliaryEffectSloti");
     if (!alAuxiliaryEffectSloti) { puts("failed to load alAuxiliaryEffectSloti OpenAL function"); return 1; }
 
@@ -193,18 +196,16 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!alFilterf) { puts("failed to load alFilterf OpenAL function"); return 1; }
 
     // ===============================
-
-    if (!(aldev = alcLoopbackOpenDeviceSOFT(NULL))) { puts("error creating/opening OpenAL loopback device"); return 1; }
-
-    ALCint attrs[] =
-    {
-        ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
-        ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
-        ALC_FREQUENCY, ALDEV_DEFAULTFREQUENCY,
-        0
-    };
-    if (!(alctx = alcCreateContext(aldev, attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
-    alcMakeContextCurrent(alctx);
+    
+    if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
+    { puts("error adding port for input left channel"); return 1; }
+    if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
+    { puts("error adding port for input right channel"); return 1; }
+    
+    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding port for output left channel"); return 1; }
+    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding port for output right channel"); return 1; }
 
     // ===============================
 
@@ -302,6 +303,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
                 ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
                 ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
                 ALC_FREQUENCY, rate,
+                ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
                 0
             };
             if (!alcResetDeviceSOFT(aldev, attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
