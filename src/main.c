@@ -32,9 +32,16 @@ static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
 static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
 static ALCdevice *aldev;
-#define ALDEV_DEFAULTFREQUENCY 48000
-static unsigned long aldev_currfreq = ALDEV_DEFAULTFREQUENCY;
 static ALCcontext *alctx;
+static ALCint alctx_attrs[] =
+{
+    ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+    ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
+    ALC_FREQUENCY, 48000,
+    ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
+    0
+};
+
 #define BUFFERSCOUNT 2
 static ALuint slot, buffers[BUFFERSCOUNT], source;
 
@@ -155,15 +162,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!alcIsExtensionPresent(aldev, "ALC_EXT_EFX"))
     { puts("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported by loopback device on this platform"); return 1; }
 
-    ALCint attrs[] =
-    {
-        ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
-        ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
-        ALC_FREQUENCY, ALDEV_DEFAULTFREQUENCY,
-        ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
-        0
-    };
-    if (!(alctx = alcCreateContext(aldev, attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
+    if (!(alctx = alcCreateContext(aldev, alctx_attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
     alcMakeContextCurrent(alctx);
 
     // ===============================
@@ -286,7 +285,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     const float *inleft = lapi->getportbuffer(inleftport, duration);
     const float *inright = lapi->getportbuffer(inrightport, duration);
 
-    if (rate != aldev_currfreq)
+    if (alctx_attrs[5] != rate)
     {
         if (rate > INT32_MAX) { printf("new sample rate is too large (new: %lu, max.: 2 ^ 31 - 1)\n", rate); return 1; }
 
@@ -298,16 +297,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
             while (queuedbuffs-- > 0) alSourceUnqueueBuffers(source, 1, &buff);
         }
         {
-            ALCint attrs[] =
-            {
-                ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
-                ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
-                ALC_FREQUENCY, rate,
-                ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
-                0
-            };
-            if (!alcResetDeviceSOFT(aldev, attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
-            aldev_currfreq = rate;
+            alctx_attrs[5] = rate;
+            if (!alcResetDeviceSOFT(aldev, alctx_attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
         }
         alSourcePlay(source);
         
