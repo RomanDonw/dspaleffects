@@ -31,6 +31,4 @@ EFX_EXTERN_KW LPALFILTERF alFilterf;
 
 #undef EFX_EXTERN_KW
 
-//char loadEFX(void);
-
 #endif
