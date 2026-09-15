@@ -21,8 +21,8 @@
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 
-#include "base/general.h"
-#include "base/EFX.h"
+#include "albase/general.h"
+#include "albase/EFX.h"
 #include "jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
@@ -65,19 +65,19 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             switch (p)
             {
                 case 'a':
-                    if (sscanf(optarg, "%f", &al_inampmod) < 1) { puts("error parsing option -a"); return 1; }
+                    if (sscanf(optarg, "%f", &albase_inampmod) < 1) { puts("error parsing option -a"); return 1; }
                     break;
 
                 case 'A':
-                    if (sscanf(optarg, "%f", &al_outampmod) < 1) { puts("error parsing option -A"); return 1; }
+                    if (sscanf(optarg, "%f", &albase_outampmod) < 1) { puts("error parsing option -A"); return 1; }
                     break;
 
                 case 'v':
-                    if (sscanf(optarg, "%f", &al_involmod) < 1) { puts("error parsing option -v"); return 1; }
+                    if (sscanf(optarg, "%f", &albase_involmod) < 1) { puts("error parsing option -v"); return 1; }
                     break;
 
                 case 'V':
-                    if (sscanf(optarg, "%f", &al_outvolmod) < 1) { puts("error parsing option -V"); return 1; }
+                    if (sscanf(optarg, "%f", &albase_outvolmod) < 1) { puts("error parsing option -V"); return 1; }
                     break;
 
                 case 'g':
@@ -124,7 +124,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         }
     }
 
-    if (al_init(lapi)) return 1;
+    if (albase_init(lapi)) return 1;
 
     // ===============================
 
@@ -176,14 +176,14 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
 
-    alSource3i(al_source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
+    alSource3i(albase_source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
 
     alFilterf(filter, AL_LOWPASS_GAIN, origgain);
-    alSourcei(al_source, AL_DIRECT_FILTER, filter);
+    alSourcei(albase_source, AL_DIRECT_FILTER, filter);
     alDeleteFilters(1, &filter);
     
     printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nreverbgain: %f\noutampmod: %f\noutvolmod: %f\n",
-        al_inampmod, al_involmod, origgain, reverbgain, al_outampmod, al_outvolmod);
+        albase_inampmod, albase_involmod, origgain, reverbgain, albase_outampmod, albase_outvolmod);
     if (configfilename) printf("configfilename: %s\n", configfilename);
     else puts("config file not specified");
     *sysname = "eaxreverb";
@@ -192,4 +192,4 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 }
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
-{ return al_process(lapi, duration, rate); }
+{ return albase_process(lapi, duration, rate); }

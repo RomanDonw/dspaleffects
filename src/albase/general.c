@@ -17,8 +17,12 @@
 #define EFX_IMPL
 #include "EFX.h"
 
-float al_inampmod = 0, al_involmod = 1, al_outampmod = 0, al_outvolmod = 1;
-ALuint al_source;
+// ===============================
+
+float albase_inampmod = 0, albase_involmod = 1, albase_outampmod = 0, albase_outvolmod = 1;
+ALuint albase_source;
+
+// ===============================
 
 static ALCdevice *aldev;
 static ALCcontext *alctx;
@@ -38,7 +42,9 @@ static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 
-char al_init(const DSPLoaderAPI *lapi)
+// ===============================
+
+char albase_init(const DSPLoaderAPI *lapi)
 {
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
     { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
@@ -95,14 +101,14 @@ char al_init(const DSPLoaderAPI *lapi)
 
     alGenBuffers(BUFFERSCOUNT, buffers);
 
-    alGenSources(1, &al_source);
-    alSourcei(al_source, AL_SOURCE_RELATIVE, AL_TRUE);
-    alSourcei(al_source, AL_ROLLOFF_FACTOR, 0);
+    alGenSources(1, &albase_source);
+    alSourcei(albase_source, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcei(albase_source, AL_ROLLOFF_FACTOR, 0);
 
     return 0;
 }
 
-char al_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate)
+char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate)
 {
     float *outleft = lapi->getportbuffer(outleftport, duration);
     float *outright = lapi->getportbuffer(outrightport, duration);
@@ -115,12 +121,12 @@ char al_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long 
     {
         if (rate > INT32_MAX) { printf("new sample rate is too large (new: %lu, max.: 2 ^ 31 - 1)\n", rate); return 1; }
 
-        alSourceStop(al_source);
+        alSourceStop(albase_source);
         {
             ALint queuedbuffs;
-            alGetSourcei(al_source, AL_BUFFERS_QUEUED, &queuedbuffs);
+            alGetSourcei(albase_source, AL_BUFFERS_QUEUED, &queuedbuffs);
             ALuint buff;
-            while (queuedbuffs-- > 0) alSourceUnqueueBuffers(al_source, 1, &buff);
+            while (queuedbuffs-- > 0) alSourceUnqueueBuffers(albase_source, 1, &buff);
         }
         alctx_attrs[5] = rate;
         if (!alcResetDeviceSOFT(aldev, alctx_attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
@@ -141,42 +147,42 @@ char al_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long 
     }
 
     for (size_t i = 0; i < (size_t)duration << 1; i++)
-        intlvaudio[i] = adjf(i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0), al_inampmod) * al_involmod;
+        intlvaudio[i] = adjf(i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0), albase_inampmod) * albase_involmod;
     
     ALint procbuffs, queuedbuffs;
-    alGetSourcei(al_source, AL_BUFFERS_PROCESSED, &procbuffs);
-    alGetSourcei(al_source, AL_BUFFERS_QUEUED, &queuedbuffs);
+    alGetSourcei(albase_source, AL_BUFFERS_PROCESSED, &procbuffs);
+    alGetSourcei(albase_source, AL_BUFFERS_QUEUED, &queuedbuffs);
 
     ALuint emptybuff;
     while (procbuffs-- > 0)
     {
-        alSourceUnqueueBuffers(al_source, 1, &emptybuff);
+        alSourceUnqueueBuffers(albase_source, 1, &emptybuff);
         alBufferData(emptybuff, AL_FORMAT_STEREO_FLOAT32, intlvaudio, intlvaudiosize, rate);
-        alSourceQueueBuffers(al_source, 1, &emptybuff);
+        alSourceQueueBuffers(albase_source, 1, &emptybuff);
     }
     while (queuedbuffs < BUFFERSCOUNT)
     {
         emptybuff = buffers[queuedbuffs++];
         alBufferData(emptybuff, AL_FORMAT_STEREO_FLOAT32, intlvaudio, intlvaudiosize, rate);
-        alSourceQueueBuffers(al_source, 1, &emptybuff);
+        alSourceQueueBuffers(albase_source, 1, &emptybuff);
     }
 
     ALint state;
-    alGetSourcei(al_source, AL_SOURCE_STATE, &state);
-    if (state != AL_PLAYING) alSourcePlay(al_source);
+    alGetSourcei(albase_source, AL_SOURCE_STATE, &state);
+    if (state != AL_PLAYING) alSourcePlay(albase_source);
 
     alcRenderSamplesSOFT(aldev, intlvaudio, duration);
     
     for (size_t i = 0; i < (size_t)duration << 1; i++)
     {
-        if (i & 1 && outright) outright[i >> 1] = adjf(intlvaudio[i], al_outampmod) * al_outvolmod;
-        else if (outleft) outleft[i >> 1] = adjf(intlvaudio[i], al_outampmod) * al_outvolmod;
+        if (i & 1 && outright) outright[i >> 1] = adjf(intlvaudio[i], albase_outampmod) * albase_outvolmod;
+        else if (outleft) outleft[i >> 1] = adjf(intlvaudio[i], albase_outampmod) * albase_outvolmod;
     }
 
     return 0;
 }
 
-void al_quit(void)
+void albase_quit(void)
 {
     alcMakeContextCurrent(NULL);
     alcDestroyContext(alctx);

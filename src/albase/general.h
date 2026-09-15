@@ -10,13 +10,13 @@
 #include <dspmodule.h>
 #include <al.h>
 
-extern ALuint al_source;
-extern float al_inampmod, al_involmod, al_outampmod, al_outvolmod;
+extern ALuint albase_source;
+extern float albase_inampmod, albase_involmod, albase_outampmod, albase_outvolmod;
 
 // returns 0 on success.
 
-char al_init(const DSPLoaderAPI *lapi);
-char al_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate);
-void al_quit(void);
+char albase_init(const DSPLoaderAPI *lapi);
+char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate);
+void albase_quit(void);
 
 #endif
