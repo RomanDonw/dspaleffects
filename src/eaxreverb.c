@@ -23,7 +23,7 @@
 
 #include "albase/general.h"
 #include "albase/EFX.h"
-#include "jsonutil.h"
+#include "jsonutil/jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
 
