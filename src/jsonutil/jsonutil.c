@@ -7,8 +7,9 @@
 #include "jsonutil.h"
 
 #include <errno.h>
+#include <string.h>
 
-bool json_getfloat(const struct json_object *obj, float *value)
+bool jsonutil_getfloat(const struct json_object *obj, float *value)
 {
     errno = 0;
     double v = json_object_get_double(obj);
@@ -17,11 +18,31 @@ bool json_getfloat(const struct json_object *obj, float *value)
     return false;
 }
 
-bool json_getbool(const struct json_object *obj, bool *value)
+bool jsonutil_getbool(const struct json_object *obj, bool *value)
 {
     errno = 0;
     bool v = json_object_get_boolean(obj);
     if (errno) return true;
     *value = v;
     return false;
+}
+
+NError jsonutil_getvec3f(const struct json_object *obj, float value[])
+{
+    if (json_object_get_type(obj) != json_type_array) return NError_IncorrectArgumentValue;
+
+    float ret[3];
+    json_object *element;
+
+    if (!(element = json_object_array_get_idx(obj, 0))) return NError_InvalidIndex;
+    if (jsonutil_getfloat(obj, ret)) return NError_NotRepresentable;
+
+    if (!(element = json_object_array_get_idx(obj, 1))) return NError_InvalidIndex;
+    if (jsonutil_getfloat(obj, ret + 1)) return NError_NotRepresentable;
+
+    if (!(element = json_object_array_get_idx(obj, 2))) return NError_InvalidIndex;
+    if (jsonutil_getfloat(obj, ret + 2)) return NError_NotRepresentable;
+
+    memcpy(value, ret, sizeof(ret));
+    return NError_Success;
 }

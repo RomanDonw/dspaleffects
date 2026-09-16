@@ -34,24 +34,24 @@ static float origgain = 1, reverbgain = 1;
     if (json_object_get_type(tmp2_jobj) != json_type_array) { puts("value by key \"" strname "\" must have an array type"); return 1; }\
     \
     if (!(tmp_jobj = json_object_array_get_idx(tmp2_jobj, 0))) { puts("value by index 0 in array with key \"" strname "\" doesn't exist"); return 1; }\
-    if (json_getfloat(tmp_jobj, tmp_floats)) { puts("unable to parse value by index 0 in array with key \"" strname "\" (required float)"); return 1; }\
+    if (jsonutil_getfloat(tmp_jobj, tmp_floats)) { puts("unable to parse value by index 0 in array with key \"" strname "\" (required float)"); return 1; }\
     \
     if (!(tmp_jobj = json_object_array_get_idx(tmp2_jobj, 1))) { puts("value by index 1 in array with key \"" strname "\" doesn't exist"); return 1; }\
-    if (json_getfloat(tmp_jobj, tmp_floats + 1)) { puts("unable to parse value by index 1 in array with key \"" strname "\" (required float)"); return 1; }\
+    if (jsonutil_getfloat(tmp_jobj, tmp_floats + 1)) { puts("unable to parse value by index 1 in array with key \"" strname "\" (required float)"); return 1; }\
     \
     if (!(tmp_jobj = json_object_array_get_idx(tmp2_jobj, 2))) { puts("value by index 2 in array with key \"" strname "\" doesn't exist"); return 1; }\
-    if (json_getfloat(tmp_jobj, tmp_floats + 2)) { puts("unable to parse value by index 2 in array with key \"" strname "\" (required float)"); return 1; }\
+    if (jsonutil_getfloat(tmp_jobj, tmp_floats + 2)) { puts("unable to parse value by index 2 in array with key \"" strname "\" (required float)"); return 1; }\
     \
     alEffectfv(effect, alname, tmp_floats);
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (json_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+    if (jsonutil_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
     alEffectf(effect, alname, *tmp_floats);
 
 #define GETBOOLCONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (json_getbool(tmp_jobj, &tmp_bool)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
+    if (jsonutil_getbool(tmp_jobj, &tmp_bool)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
     alEffecti(effect, alname, tmp_bool);
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
