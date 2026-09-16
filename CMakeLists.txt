@@ -11,7 +11,6 @@ endmacro()
 
 find_package(json-c CONFIG REQUIRED)
 find_package(OpenAL REQUIRED)
-find_package(libncore REQUIRED)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/albase/*.h" "src/albase/*.c")
 add_library(dspalbase OBJECT ${SOURCES})
@@ -22,7 +21,7 @@ set_target_properties(dspalbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
 file(GLOB SOURCES CONFIGURE_DEPENDS "src/jsonutil/*.h" "src/jsonutil/*.c")
 add_library(jsonutil OBJECT ${SOURCES})
 unset(SOURCES)
-target_link_libraries(jsonutil PUBLIC json-c::json-c libncore::ncore)
+target_link_libraries(jsonutil PUBLIC json-c::json-c)
 set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(dspeaxreverb SHARED "src/eaxreverb.c")

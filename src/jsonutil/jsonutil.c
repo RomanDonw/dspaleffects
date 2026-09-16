@@ -27,15 +27,15 @@ bool jsonutil_getbool(const struct json_object *obj, bool *value)
     return false;
 }
 
-NError jsonutil_getvec3f(const struct json_object *obj, float value[])
+int jsonutil_getvec3f(const struct json_object *obj, float value[])
 {
-    if (json_object_get_type(obj) != json_type_array) return NError_IncorrectArgumentValue;
+    if (json_object_get_type(obj) != json_type_array) return EINVAL;
 
     float ret[3];
     json_object *element;
 
-    if (!(element = json_object_array_get_idx(obj, 0))) return NError_InvalidIndex;
-    if (jsonutil_getfloat(obj, ret)) return NError_NotRepresentable;
+    if (!(element = json_object_array_get_idx(obj, 0))) return ERANGE;
+    if (jsonutil_getfloat(obj, ret)) return ERANGE;
 
     if (!(element = json_object_array_get_idx(obj, 1))) return NError_InvalidIndex;
     if (jsonutil_getfloat(obj, ret + 1)) return NError_NotRepresentable;

@@ -9,12 +9,11 @@
 
 #include <stdbool.h>
 #include <json-c/json_object.h>
-#include <libncore.h>
 
 // all this functions return true on error!!!
 
-bool jsonutil_getfloat(const struct json_object *obj, float *value);
-bool jsonutil_getbool(const struct json_object *obj, bool *value);
-NError jsonutil_getvec3f(const struct json_object *obj, float value[]);
+int jsonutil_getfloat(const struct json_object *obj, float *value);
+int jsonutil_getbool(const struct json_object *obj, bool *value);
+int jsonutil_getvec3f(const struct json_object *obj, float value[]);
 
 #endif
