@@ -10,10 +10,10 @@
 #include <stdbool.h>
 #include <json-c/json_object.h>
 
-// all this functions return true on error!!!
+// all this functions return true on error & sets errno to indicate error !!!
 
-int jsonutil_getfloat(const struct json_object *obj, float *value);
-int jsonutil_getbool(const struct json_object *obj, bool *value);
-int jsonutil_getvec3f(const struct json_object *obj, float value[]);
+bool jsonutil_getfloat(const struct json_object *obj, float *value);
+bool jsonutil_getbool(const struct json_object *obj, bool *value);
+bool jsonutil_getvec3f(const struct json_object *obj, float value[]);
 
 #endif
