@@ -11,19 +11,16 @@
 
 bool jsonutil_getfloat(const struct json_object *obj, float *value)
 {
-    errno = 0;
-    double v = json_object_get_double(obj);
-    if (errno) return true;
-    *value = v;
+    enum json_type objt = json_object_get_type(obj);
+    if (objt != json_type_double && objt != json_type_int) { errno = EINVAL; return true; }
+    *value = json_object_get_double(obj);
     return false;
 }
 
 bool jsonutil_getbool(const struct json_object *obj, bool *value)
 {
-    errno = 0;
-    bool v = json_object_get_boolean(obj);
-    if (errno) return true;
-    *value = v;
+    if (json_object_get_type(obj) != json_type_boolean) { errno = EINVAL; return true; }
+    *value = json_object_get_boolean(obj);
     return false;
 }
 
