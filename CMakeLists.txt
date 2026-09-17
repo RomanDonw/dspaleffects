@@ -28,3 +28,8 @@ add_library(dspeaxreverb SHARED "src/eaxreverb.c")
 set_target_properties(dspeaxreverb PROPERTIES PREFIX "")
 target_link_libraries(dspeaxreverb PRIVATE dspalbase jsonutil)
 target_defsym(dspeaxreverb "dspmodule_cleanup" "albase_quit")
+
+add_library(dspchorus SHARED "src/chorus.c")
+set_target_properties(dspchorus PROPERTIES PREFIX "")
+target_link_libraries(dspchorus PRIVATE dspalbase jsonutil)
+target_defsym(dspchorus "dspmodule_cleanup" "albase_quit")
