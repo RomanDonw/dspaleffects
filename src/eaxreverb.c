@@ -30,24 +30,24 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, reverbgain = 1;
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getvec3f(tmp_jobj, tmp_floats)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
-    alEffectfv(effect, alname, tmp_floats);
+    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (jsonutil_getvec3f(jobj, vec3f)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
+    alEffectfv(effect, alname, vec3f);
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
-    alEffectf(effect, alname, *tmp_floats);
+    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+    alEffectf(effect, alname, *vec3f);
 
 #define GETBOOLCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getbool(tmp_jobj, &tmp_bool)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
-    alEffecti(effect, alname, tmp_bool);
+    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (jsonutil_getbool(jobj, &flag)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
+    alEffecti(effect, alname, flag);
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
     const char *configfilename = NULL;
-    struct json_object *configroot;
+    struct json_object *configroot = NULL;
     {
         int p;
         while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:")) != -1)
@@ -122,11 +122,11 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alGenEffects(1, &effect);
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
 
-    if (configfilename)
+    if (configroot)
     {
-        bool tmp_bool;
-        float tmp_floats[3];
-        struct json_object *tmp_jobj, *tmp2_jobj;
+        bool flag;
+        float vec3f[3];
+        struct json_object *jobj;
 
         GETFLTCONFOPTHELPER("density", AL_EAXREVERB_DENSITY);
         GETFLTCONFOPTHELPER("diffusion", AL_EAXREVERB_DIFFUSION);
@@ -152,9 +152,9 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         GETFLTCONFOPTHELPER("LFReference", AL_EAXREVERB_LFREFERENCE);
         GETFLTCONFOPTHELPER("roomRolloffFactor", AL_EAXREVERB_ROOM_ROLLOFF_FACTOR);
         GETBOOLCONFOPTHELPER("decayHFLimit", AL_EAXREVERB_DECAY_HFLIMIT);
-    }
 
-    json_object_put(configroot);
+        json_object_put(configroot);
+    }
 
     // ===============================
     

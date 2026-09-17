@@ -30,19 +30,19 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, chorusgain = 1;
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getvec3f(tmp_jobj, tmp_floats)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
-    alEffectfv(effect, alname, tmp_floats);
+    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (jsonutil_getvec3f(jobj, vec3f)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
+    alEffectfv(effect, alname, vec3f);
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getfloat(tmp_jobj, tmp_floats)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
-    alEffectf(effect, alname, *tmp_floats);
+    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+    alEffectf(effect, alname, *vec3f);
 
 #define GETBOOLCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &tmp_jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getbool(tmp_jobj, &tmp_bool)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
-    alEffecti(effect, alname, tmp_bool);
+    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    if (jsonutil_getbool(jobj, &flag)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
+    alEffecti(effect, alname, flag);
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
@@ -124,9 +124,9 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     if (configroot)
     {
-        bool tmp_bool;
-        float tmp_floats[3];
-        struct json_object *tmp_jobj, *tmp2_jobj;
+        bool flag;
+        float vec3f[3];
+        struct json_object *jobj;
 
         GETFLTCONFOPTHELPER("delay", AL_CHORUS_DELAY);
         GETFLTCONFOPTHELPER("depth", AL_CHORUS_DEPTH);
@@ -134,12 +134,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         GETFLTCONFOPTHELPER("phase", AL_CHORUS_PHASE);
         GETFLTCONFOPTHELPER("rate", AL_CHORUS_RATE);
         
-        if (!json_object_object_get_ex(configroot, "waveform", &tmp_jobj)) { puts("key \"waveform\" doesnt found in config file"); return 1; }
-        if (json_object_get_type(tmp_jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
-        const char *waveform = json_object_get_string(tmp_jobj);
+        if (!json_object_object_get_ex(configroot, "waveform", &jobj)) { puts("key \"waveform\" doesnt found in config file"); return 1; }
+        if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
+        const char *waveform = json_object_get_string(jobj);
         if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
         else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
-        else { printf("incorrect \"waveform\" option value (allowed: \"sinusoid\", \"triangle\", got: \"%s\")\n", waveform); return 1; }
+        else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"triangle\", got: \"%s\")\n", waveform); return 1; }
 
         json_object_put(configroot);
     }
