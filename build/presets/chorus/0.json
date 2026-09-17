@@ -1,8 +1,8 @@
 {
-    "delay": 0.016,
+    "delay": 0.008,
     "depth": 0.1,
-    "feedback": 0,
+    "feedback": 0.2,
     "phase": 90,
-    "rate": 1.1,
+    "rate": 10,
     "waveform": "sinusoid"
 }
