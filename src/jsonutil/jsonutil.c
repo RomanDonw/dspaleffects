@@ -29,16 +29,16 @@ bool jsonutil_getvec3f(const struct json_object *obj, float value[])
     if (json_object_get_type(obj) != json_type_array) { errno = EINVAL; return true; }
 
     float ret[3];
-    json_object *element;
+    const json_object *element;
 
     if (!(element = json_object_array_get_idx(obj, 0))) goto idxinval;
-    if (jsonutil_getfloat(obj, ret)) return true;
+    if (jsonutil_getfloat(element, ret)) return true;
 
     if (!(element = json_object_array_get_idx(obj, 1))) goto idxinval;
-    if (jsonutil_getfloat(obj, ret + 1)) return true;
+    if (jsonutil_getfloat(element, ret + 1)) return true;
 
     if (!(element = json_object_array_get_idx(obj, 2))) goto idxinval;
-    if (jsonutil_getfloat(obj, ret + 2)) return true;
+    if (jsonutil_getfloat(element, ret + 2)) return true;
 
     memcpy(value, ret, sizeof(ret));
     return false;
