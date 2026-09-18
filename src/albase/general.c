@@ -48,22 +48,21 @@ char albase_init(const DSPLoaderAPI *lapi)
 {
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
     { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
-
     LPALCLOOPBACKOPENDEVICESOFT alcLoopbackOpenDeviceSOFT = alcGetProcAddress(NULL, "alcLoopbackOpenDeviceSOFT");
     if (!alcLoopbackOpenDeviceSOFT) { puts("failed to dynamicly load alcLoopbackOpenDeviceSOFT OpenAL function"); return 1; }
-    if (!(alcRenderSamplesSOFT = alcGetProcAddress(NULL, "alcRenderSamplesSOFT")))
-    { puts("failed to dynamicly load alcRenderSamplesSOFT OpenAL function"); return 1; }
-    if (!(alcResetDeviceSOFT = alcGetProcAddress(NULL, "alcResetDeviceSOFT")))
-    { puts("failed to dynamicly load alcResetDeviceSOFT OpenAL function"); return 1; }
+    if (!(aldev = alcLoopbackOpenDeviceSOFT(NULL))) { puts("error creating/opening OpenAL loopback device"); return 1; }
     
     // ===============================
 
-    if (!(aldev = alcLoopbackOpenDeviceSOFT(NULL))) { puts("error creating/opening OpenAL loopback device"); return 1; }
     if (!alcIsExtensionPresent(aldev, "ALC_SOFT_output_limiter"))
     { puts("required \"ALC_SOFT_output_limiter\" OpenAL extension doesn't supported by loopback device on this platform"); return 1; }
     if (!alcIsExtensionPresent(aldev, "ALC_EXT_EFX"))
     { puts("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported by loopback device on this platform"); return 1; }
-
+    if (!(alcRenderSamplesSOFT = alcGetProcAddress(aldev, "alcRenderSamplesSOFT")))
+    { puts("required alcRenderSamplesSOFT OpenAL function doesn't supported by loopback device on this platform"); return 1; }
+    if (!(alcResetDeviceSOFT = alcGetProcAddress(aldev, "alcResetDeviceSOFT")))
+    { puts("required alcResetDeviceSOFT OpenAL function doesn't supported by loopback device on this platform"); return 1; }
+    
     if (!(alctx = alcCreateContext(aldev, alctx_attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
     alcMakeContextCurrent(alctx);
 
