@@ -112,7 +112,6 @@ char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned l
 {
     float *outleft = lapi->getportbuffer(outleftport, duration);
     float *outright = lapi->getportbuffer(outrightport, duration);
-    if (!(outleft || outright)) return 0;
 
     const float *inleft = lapi->getportbuffer(inleftport, duration);
     const float *inright = lapi->getportbuffer(inrightport, duration);
