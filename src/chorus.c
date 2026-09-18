@@ -27,7 +27,7 @@
 
 const unsigned short dspmodule_requiredAPIversion = 1;
 
-static float origgain = 1, chorusgain = 1;
+static float origgain = 1, effectgain = 1;
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
@@ -76,8 +76,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     break;
 
                 case 'G':
-                    if (sscanf(optarg, "%f", &chorusgain) < 1) { puts("error parsing option -G"); return 1; }
-                    chorusgain = clampf(chorusgain, 0, 1);
+                    if (sscanf(optarg, "%f", &effectgain) < 1) { puts("error parsing option -G"); return 1; }
+                    effectgain = clampf(effectgain, 0, 1);
                     break;
 
                 case 'f':
@@ -150,7 +150,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alGenFilters(1, &filter);
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     alFilterf(filter, AL_LOWPASS_GAINHF, 1);
-    alFilterf(filter, AL_LOWPASS_GAIN, chorusgain);
+    alFilterf(filter, AL_LOWPASS_GAIN, effectgain);
     
     alGenAuxiliaryEffectSlots(1, &slot);
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
@@ -162,8 +162,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alSourcei(albase_source, AL_DIRECT_FILTER, filter);
     alDeleteFilters(1, &filter);
     
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nchorusgain: %f\noutampmod: %f\noutvolmod: %f\n",
-        albase_inampmod, albase_involmod, origgain, chorusgain, albase_outampmod, albase_outvolmod);
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\n",
+        albase_inampmod, albase_involmod, origgain, effectgain, albase_outampmod, albase_outvolmod);
     if (configfilename) printf("configfilename: %s\n", configfilename);
     else puts("config file not specified");
     *sysname = "chorus";
