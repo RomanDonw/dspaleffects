@@ -16,7 +16,7 @@ extern float albase_inampmod, albase_involmod, albase_outampmod, albase_outvolmo
 // returns 0 on success.
 
 char albase_init(const DSPLoaderAPI *lapi);
-char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate);
+//char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate);
 void albase_quit(void);
 
 #endif
