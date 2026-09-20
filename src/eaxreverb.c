@@ -174,21 +174,28 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     albase_source_create(&s);
     
-    ALuint filter, slot;
+    alSourcei(s.source, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcei(s.source, AL_ROLLOFF_FACTOR, 0);
+    
+    ALuint filter;
     alGenFilters(1, &filter);
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     alFilterf(filter, AL_LOWPASS_GAINHF, 1);
-    alFilterf(filter, AL_LOWPASS_GAIN, effectgain);
+    alFilterf(filter, AL_LOWPASS_GAIN, origgain);
+    alSourcei(s.source, AL_DIRECT_FILTER, filter);
     
+    // ===============================
+    
+    ALuint slot;
     alGenAuxiliaryEffectSlots(1, &slot);
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
-
+    
+    alFilterf(filter, AL_LOWPASS_GAIN, effectgain);
     alSource3i(s.source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
-
-    alFilterf(filter, AL_LOWPASS_GAIN, origgain);
-    alSourcei(s.source, AL_DIRECT_FILTER, filter);
     alDeleteFilters(1, &filter);
+    
+    // ===============================
     
     printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\n",
         inampmod, involmod, origgain, effectgain, outampmod, outvolmod);
@@ -201,6 +208,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
-    albase_source_updatestereo(&s, lapi->getportbuffer(inleftport, duration), lapi->getportbuffer(inrightport, duration), duration, rate);
+    char err = albase_source_updatestereo(&s, lapi->getportbuffer(inleftport, duration), lapi->getportbuffer(inrightport, duration), duration, rate);
+    if (err) return err;
     return albase_render(lapi->getportbuffer(outleftport, duration), lapi->getportbuffer(outrightport, duration), duration, rate);
 }
