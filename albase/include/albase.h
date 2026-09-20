@@ -13,7 +13,6 @@
 // returns 0 on success.
 
 char albase_init(unsigned long firstrate);
-//char albase_checkrate(unsigned long rate);
 // [albase_render]: left & right can be NULL (all combinations are allowed).
 char albase_render(float left[], float right[], unsigned long duration, unsigned long rate);
 void albase_quit(void);
@@ -22,7 +21,6 @@ struct ALBaseSource
 {
     // all fields are readonly!
     ALuint source, buffers[2];
-    //bool stereo;
 } typedef ALBaseSource;
 
 void albase_source_create(ALBaseSource *source);
