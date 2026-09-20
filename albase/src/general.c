@@ -4,7 +4,7 @@
     file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
 
-#include "general.h"
+#include "albase.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -16,28 +16,33 @@
 
 #define EFX_IMPL
 #include "EFX.h"
+#include "context.h"
+
+// ===============================
+
+ALCint __albase_alctx_attrs[] =
+{
+    ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+    ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
+    ALC_FREQUENCY, 0,
+    ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
+    0
+};
+
+void *__albase_tmpbuffdata = NULL;
+size_t __albase_tmpbuffsize = 0;
 
 // ===============================
 
 static ALCdevice *aldev;
 static ALCcontext *alctx;
-static ALCint alctx_attrs[] =
-{
-    ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
-    ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
-    ALC_FREQUENCY, 48000,
-    ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
-    0
-};
 
 static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
 static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
-static void *inleftport, *inrightport, *outleftport, *outrightport;
-
 // ===============================
 
-char albase_init(const DSPLoaderAPI *lapi)
+char albase_init(unsigned long firstrate)
 {
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
     { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
@@ -56,6 +61,7 @@ char albase_init(const DSPLoaderAPI *lapi)
     if (!(alcResetDeviceSOFT = alcGetProcAddress(aldev, "alcResetDeviceSOFT")))
     { puts("required alcResetDeviceSOFT OpenAL function doesn't supported by loopback device on this platform"); return 1; }
     
+    alctx_attrs[5] = firstrate;
     if (!(alctx = alcCreateContext(aldev, alctx_attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
     alcMakeContextCurrent(alctx);
 
@@ -77,29 +83,37 @@ char albase_init(const DSPLoaderAPI *lapi)
     if (!(alFilteri = alGetProcAddress("alFilteri"))) { puts("failed to load alFilteri OpenAL function"); return 1; }
     if (!(alFilterf = alGetProcAddress("alFilterf"))) { puts("failed to load alFilterf OpenAL function"); return 1; }
 
-    // ===============================
+    return 0;
+}
+
+char albase_render(float left[], float right[], unsigned long duration, unsigned long rate)
+{
+    if (alctx_attrs[5] != rate)
+    {
+        alctx_attrs[5] = rate;
+        if (!alcResetDeviceSOFT(aldev, alctx_attrs)) return 1; //{ puts("failed changing OpenAL loopback device sample rate"); return 1; }
+    }
     
-    if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input left channel"); return 1; }
-    if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input right channel"); return 1; }
+    if (tmpbuffsize != sizeof(float) * duration * 2)
+    {
+        void *new_tmpbuffdata = realloc(tmpbuffdata, sizeof(float) * duration * 2);
+        if (!new_tmpbuffdata) return 1;
+        tmpbuffdata = new_tmpbuffdata;
+        tmpbuffsize = sizeof(float) * duration * 2;
+    }
+
+    alcRenderSamplesSOFT(aldev, tmpbuffdata, duration);
     
-    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output left channel"); return 1; }
-    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output right channel"); return 1; }
-
-    // ===============================
-
-    //alGenBuffers(BUFFERSCOUNT, buffers);
-
-    //alGenSources(1, &albase_source);
-    //alSourcei(albase_source, AL_SOURCE_RELATIVE, AL_TRUE);
-    //alSourcei(albase_source, AL_ROLLOFF_FACTOR, 0);
+    for (size_t i = 0; i < (size_t)duration << 1; i++)
+    {
+        if (i & 1 && right) right[i >> 1] = ((float *)tmpbuffdata)[i];
+        else if (left) left[i >> 1] = ((float *)tmpbuffdata)[i];
+    }
 
     return 0;
 }
 
+#if 0
 char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned long rate, ALuint source, ALuint buffers[], size_t bufferscount, float inampmod, float involmod, float outampmod, float outvolmod)
 {
     float *outleft = lapi->getportbuffer(outleftport, duration);
@@ -119,9 +133,7 @@ char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned l
             ALuint buff;
             while (queuedbuffs-- > 0) alSourceUnqueueBuffers(source, 1, &buff);
         }
-        alctx_attrs[5] = rate;
-        if (!alcResetDeviceSOFT(aldev, alctx_attrs)) { puts("failed changing OpenAL loopback device sample rate"); return 1; }
-        
+
         if (outleft) inleft ? memcpy(outleft, inleft, duration * sizeof(float)) : memset(outleft, 0, duration * sizeof(float));
         if (outright) inright ? memcpy(outright, inright, duration * sizeof(float)) : memset(outright, 0, duration * sizeof(float));
         return 0;
@@ -172,10 +184,15 @@ char albase_process(const DSPLoaderAPI *lapi, unsigned long duration, unsigned l
 
     return 0;
 }
+#endif
 
 void albase_quit(void)
 {
     alcMakeContextCurrent(NULL);
     alcDestroyContext(alctx);
     alcCloseDevice(aldev);
+
+    free(tmpbuffdata);
+    tmpbuffdata = NULL;
+    tmpbuffsize = 0;
 }
