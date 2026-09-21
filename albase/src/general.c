@@ -5,22 +5,21 @@
 */
 
 #include "albase.h"
+#define EFX_IMPL
+#include "EFX.h"
 
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <alc.h>
 #include <alext.h>
 
-#define EFX_IMPL
-#include "EFX.h"
-#include "context.h"
-
 // ===============================
 
-ALCint __albase_alctx_attrs[] =
+static ALCint alctx_attrs[] =
 {
     ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
     ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
@@ -29,8 +28,8 @@ ALCint __albase_alctx_attrs[] =
     0
 };
 
-void *__albase_tmpbuffdata = NULL;
-size_t __albase_tmpbuffsize = 0;
+static void *tmpbuffdata = NULL;
+static size_t tmpbuffsize = 0;
 
 // ===============================
 
@@ -42,8 +41,12 @@ static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
 // ===============================
 
+static bool inited = false;
+
 char albase_init(unsigned long firstrate)
 {
+    if (inited) return 1;
+
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
     { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
     LPALCLOOPBACKOPENDEVICESOFT alcLoopbackOpenDeviceSOFT = alcGetProcAddress(NULL, "alcLoopbackOpenDeviceSOFT");
@@ -83,15 +86,18 @@ char albase_init(unsigned long firstrate)
     if (!(alFilteri = alGetProcAddress("alFilteri"))) { puts("failed to load alFilteri OpenAL function"); return 1; }
     if (!(alFilterf = alGetProcAddress("alFilterf"))) { puts("failed to load alFilterf OpenAL function"); return 1; }
 
+    inited = true;
     return 0;
 }
 
 char albase_render(float left[], float right[], unsigned long duration, unsigned long rate)
 {
+    if (!inited) return 1;
+    
     if (alctx_attrs[5] != rate)
     {
         alctx_attrs[5] = rate;
-        if (!alcResetDeviceSOFT(aldev, alctx_attrs)) return 1; //{ puts("failed changing OpenAL loopback device sample rate"); return 1; }
+        if (!alcResetDeviceSOFT(aldev, alctx_attrs)) return 1;
     }
     
     if (tmpbuffsize != sizeof(float) * duration * 2)
@@ -113,8 +119,10 @@ char albase_render(float left[], float right[], unsigned long duration, unsigned
     return 0;
 }
 
-void albase_quit(void)
+char albase_quit(void)
 {
+    if (!inited) return 1;
+
     alcMakeContextCurrent(NULL);
     alcDestroyContext(alctx);
     alcCloseDevice(aldev);
@@ -122,4 +130,7 @@ void albase_quit(void)
     free(tmpbuffdata);
     tmpbuffdata = NULL;
     tmpbuffsize = 0;
+
+    inited = false;
+    return 0;
 }

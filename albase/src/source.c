@@ -4,6 +4,8 @@
     file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
 
+#if 0
+
 #include "albase.h"
 
 #include <stdlib.h>
@@ -15,6 +17,7 @@ void albase_source_create(ALBaseSource *source)
 {
     alGenSources(1, &source->source);
     alGenBuffers(2, source->buffers);
+    rate = 0;
 }
 
 void albase_source_destroy(const ALBaseSource *source)
@@ -25,6 +28,11 @@ void albase_source_destroy(const ALBaseSource *source)
 
 char albase_source_updatemono(const ALBaseSource *source, const float mono[], unsigned long duration, unsigned long rate)
 {
+    if (source->rate && source->rate != rate)
+    {
+        return 0;
+    }
+
     ALint procbuffs, queuedbuffs;
     alGetSourcei(source->source, AL_BUFFERS_PROCESSED, &procbuffs);
     alGetSourcei(source->source, AL_BUFFERS_QUEUED, &queuedbuffs);
@@ -46,7 +54,8 @@ char albase_source_updatemono(const ALBaseSource *source, const float mono[], un
     ALint state;
     alGetSourcei(source->source, AL_SOURCE_STATE, &state);
     if (state != AL_PLAYING) alSourcePlay(source->source);
-
+    source->rate = rate;
+    
     return 0;
 }
 
@@ -86,3 +95,5 @@ char albase_source_updatestereo(const ALBaseSource *source, const float left[], 
 
     return 0;
 }
+
+#endif
