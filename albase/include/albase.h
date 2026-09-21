@@ -13,7 +13,6 @@
 // returns 0 on success.
 
 char albase_init(unsigned long firstrate);
-// [albase_render]: left & right can be NULL (all combinations are allowed).
 char albase_render(float left[], float right[], unsigned long duration, unsigned long rate);
 char albase_quit(void);
 

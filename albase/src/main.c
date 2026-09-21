@@ -87,7 +87,7 @@ char albase_init(unsigned long initrate)
 
 char albase_render(float left[], float right[], unsigned long duration, unsigned long rate)
 {
-    if (!(inited && duration)) return 1;
+    if (!(inited && duration && left && right)) return 1;
     
     if (currrate != rate)
     {

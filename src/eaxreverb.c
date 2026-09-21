@@ -22,14 +22,14 @@
 #include <json-c/json_tokener.h>
 
 #include "albase.h"
-#include "../albase/src/EFX.h"
+#include "EFX.h"
 #include "jsonutil/jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
-static ALBaseSource s;
+static ALuint source, buffer;
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
@@ -172,17 +172,17 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     
     // ===============================
 
-    albase_source_create(&s);
+    alGenSources(1, &source);
     
-    alSourcei(s.source, AL_SOURCE_RELATIVE, AL_TRUE);
-    alSourcei(s.source, AL_ROLLOFF_FACTOR, 0);
+    alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcei(source, AL_ROLLOFF_FACTOR, 0);
     
     ALuint filter;
     alGenFilters(1, &filter);
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     alFilterf(filter, AL_LOWPASS_GAINHF, 1);
     alFilterf(filter, AL_LOWPASS_GAIN, origgain);
-    alSourcei(s.source, AL_DIRECT_FILTER, filter);
+    alSourcei(source, AL_DIRECT_FILTER, filter);
     
     // ===============================
     
@@ -192,9 +192,13 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alDeleteEffects(1, &effect);
     
     alFilterf(filter, AL_LOWPASS_GAIN, effectgain);
-    alSource3i(s.source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
+    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
     alDeleteFilters(1, &filter);
     
+    // ===============================
+
+    alGenBuffers(1, &buffer);
+
     // ===============================
     
     printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\n",
@@ -208,7 +212,35 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
-    char err = albase_source_updatestereo(&s, lapi->getportbuffer(inleftport, duration), lapi->getportbuffer(inrightport, duration), duration, rate);
-    if (err) return err;
-    return albase_render(lapi->getportbuffer(outleftport, duration), lapi->getportbuffer(outrightport, duration), duration, rate);
+    float *outleft = lapi->getportbuffer(outleftport, duration);
+    if (!outleft) return 0;
+    float *outright = lapi->getportbuffer(outrightport, duration);
+    if (!outright) return 0;
+    
+    const float *inleft = lapi->getportbuffer(inleftport, duration);
+    const float *inright = lapi->getportbuffer(inrightport, duration);
+    size_t currframesize = (duration + 1) * sizeof(float) * 2;
+
+    static float *intlvdata = NULL;
+    static size_t intlvsize = 0;
+    if (intlvsize != currframesize)
+    {
+        void *new = realloc(intlvdata, currframesize);
+        if (!new) { puts("memory reallocation failed"); return 1; }
+        intlvdata = new;
+        intlvsize = currframesize;
+    }
+
+    for (size_t i = 0; i < ((size_t)duration) << 1; i++)
+    { intlvdata[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
+    
+    alSourcei(source, AL_BUFFER, 0);
+    alBufferData(buffer, AL_FORMAT_STEREO_FLOAT32, intlvdata, currframesize, rate);
+    alSourcei(source, AL_BUFFER, buffer);
+    
+    ALint state;
+    alGetSourcei(source, AL_SOURCE_STATE, &state);
+    if (state != AL_PLAYING) alSourcePlay(source);
+
+    return albase_render(outleft, outright, duration, rate);
 }
