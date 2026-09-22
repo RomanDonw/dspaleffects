@@ -222,7 +222,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     
     alSourceRewind(source);
     alSourcei(source, AL_BUFFER, 0);
-    
+
     size_t buffsize = (duration + 1) * sizeof(float) * 2;
     float buff[buffsize];
     for (size_t i = 0; i < ((size_t)duration) << 1; i++)
@@ -232,5 +232,12 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     alSourcei(source, AL_BUFFER, buffer);
     alSourcePlay(source);
 
-    return albase_render(outleft, outright, duration, rate);
+    if (albase_render(buff, duration, rate)) return 1;
+    if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
+    {
+        if (outleft) outleft[i] = buff[i * 2];
+        if (outright) outright[i] = buff[i * 2 + 1];
+    }
+
+    return 0;
 }

@@ -13,7 +13,7 @@
 // returns 0 on success.
 
 char albase_init(unsigned long firstrate);
-char albase_render(float left[], float right[], unsigned long duration, unsigned long rate);
+char albase_render(float interleaved[], unsigned long duration, unsigned long rate);
 char albase_quit(void);
 
 #endif

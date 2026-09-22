@@ -85,7 +85,7 @@ char albase_init(unsigned long initrate)
     return 0;
 }
 
-char albase_render(float left[], float right[], unsigned long duration, unsigned long rate)
+char albase_render(float interleaved[], unsigned long duration, unsigned long rate)
 {
     if (!(inited && duration)) return 1;
     
@@ -103,10 +103,7 @@ char albase_render(float left[], float right[], unsigned long duration, unsigned
         currrate = rate;
     }
     
-    float buff[duration * 2 * sizeof(float)];
-    alcRenderSamplesSOFT(aldev, buff, duration);
-    for (unsigned long i = 0; i < duration; i++) { if (left) left[i] = buff[i * 2]; if (right) right[i] = buff[i * 2 + 1]; }
-
+    alcRenderSamplesSOFT(aldev, interleaved, duration);
     return 0;
 }
 
