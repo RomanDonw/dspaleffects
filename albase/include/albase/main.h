@@ -4,8 +4,8 @@
     file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
 
-#ifndef ALBASE_H
-#define ALBASE_H
+#ifndef ALBASE_MAIN_H
+#define ALBASE_MAIN_H
 
 #include <stdbool.h>
 #include <al.h>

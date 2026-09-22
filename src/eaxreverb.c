@@ -15,8 +15,8 @@
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 
-#include "albase.h"
-#include "EFX.h"
+#include "albase/main.h"
+#include "albase/EFX.h"
 #include "jsonutil/jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
@@ -111,6 +111,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     }
 
     if (albase_init(48000, true)) return 1;
+    if (albase_loadEFX()) return 1;
 
     // ===============================
 
