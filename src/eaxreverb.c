@@ -24,6 +24,7 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
+static bool allowidlerenders = false;
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
@@ -46,7 +47,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     struct json_object *configroot = NULL;
     {
         int p;
-        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:")) != -1)
+        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:i")) != -1)
         {
             switch (p)
             {
@@ -106,6 +107,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                         fclose(f);
                     return 1;
                 }
+
+                case 'i':
+                    allowidlerenders = true;
+                    break;
             }
         }
     }
@@ -196,8 +201,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     // ===============================
     
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\n",
-        inampmod, involmod, origgain, effectgain, outampmod, outvolmod);
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
+        inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
     if (configfilename) printf("configfilename: %s\n", configfilename);
     else puts("config file not specified");
     *sysname = "eaxreverb";
@@ -208,9 +213,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
     float *outleft = lapi->getportbuffer(outleftport, duration);
-    if (!outleft) return 0;
     float *outright = lapi->getportbuffer(outrightport, duration);
-    if (!outright) return 0;
+    if (!(allowidlerenders || outleft || outright)) return 0;
     
     const float *inleft = lapi->getportbuffer(inleftport, duration);
     const float *inright = lapi->getportbuffer(inrightport, duration);
