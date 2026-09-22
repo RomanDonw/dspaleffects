@@ -218,6 +218,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     
     const float *inleft = lapi->getportbuffer(inleftport, duration);
     const float *inright = lapi->getportbuffer(inrightport, duration);
+
+    // ===============================
     
     alSourceRewind(source);
     alSourcei(source, AL_BUFFER, 0);
@@ -230,6 +232,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     alSourcei(source, AL_BUFFER, buffer);
     alSourcePlay(source);
+
+    // ===============================
 
     if (albase_render(buff, duration, rate)) return 1;
     if (outleft || outright) for (unsigned long i = 0; i < duration; i++)

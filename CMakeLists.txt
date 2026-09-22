@@ -12,12 +12,7 @@ endmacro()
 find_package(json-c CONFIG REQUIRED)
 find_package(OpenAL REQUIRED)
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "albase/src/*.h" "albase/src/*.c")
-add_library(dspalbase OBJECT ${SOURCES})
-unset(SOURCES)
-target_link_libraries(dspalbase PUBLIC OpenAL::OpenAL)
-set_target_properties(dspalbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_include_directories(dspalbase PUBLIC "albase/include/")
+add_subdirectory("albase/")
 
 file(GLOB SOURCES CONFIGURE_DEPENDS "src/jsonutil/*.h" "src/jsonutil/*.c")
 add_library(jsonutil OBJECT ${SOURCES})

@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <al.h>
 
-// returns 0 on success.
+// all these functions returns 0 on success.
 
 char albase_init(unsigned long firstrate, bool errorlog);
 char albase_render(float interleaved[], unsigned long duration, unsigned long rate);

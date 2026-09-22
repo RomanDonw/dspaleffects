@@ -49,6 +49,7 @@ ALBASE_EFX_EXTERN_KW LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
 
 #undef ALBASE_EFX_EXTERN_KW
 
+// returns 0 on success.
 char albase_loadEFX(void);
 
 #endif
