@@ -66,7 +66,7 @@ char albase_init(unsigned long initrate, bool errorlog)
         if (!(alctx = alcCreateContext(aldev, attrs))) { ERRORLOG("error creating OpenAL context for loopback device"); return 1; }
         currrate = initrate;
     }
-    alcMakeContextCurrent(alctx);
+    if (!alcMakeContextCurrent(alctx)) { ERRORLOG("unable to set new OpenAL context as current"); return 1; }
 
     // ===============================
 
@@ -109,6 +109,8 @@ char albase_render(float interleaved[], unsigned long duration, unsigned long ra
     }
     
     alcRenderSamplesSOFT(aldev, interleaved, duration);
+    if (alcGetError(aldev) != ALC_NO_ERROR) { ERRORLOG("failed rendering sampels into buffer"); return 1; }
+
     return 0;
 }
 
