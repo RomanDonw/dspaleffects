@@ -87,7 +87,7 @@ char albase_init(unsigned long initrate)
 
 char albase_render(float left[], float right[], unsigned long duration, unsigned long rate)
 {
-    if (!(inited && duration && left && right)) return 1;
+    if (!(inited && duration)) return 1;
     
     if (currrate != rate)
     {
@@ -103,22 +103,9 @@ char albase_render(float left[], float right[], unsigned long duration, unsigned
         currrate = rate;
     }
     
-    alcRenderSamplesSOFT(aldev, left, duration >> 1);
-    alcRenderSamplesSOFT(aldev, right, duration >> 1);
-    unsigned long offset;
-    for (offset = 0; offset < duration & (~1); offset++) if (offset & 1)
-    {
-        float tmp = left[offset];
-        left[offset] = right[offset];
-        right[offset] = tmp;
-    }
-    if (duration & 1)
-    {
-        float frame[2];
-        alcRenderSamplesSOFT(aldev, frame, 1);
-        left[offset] = frame[0];
-        right[offset] = frame[1];
-    }
+    float buff[duration * 2 * sizeof(float)];
+    alcRenderSamplesSOFT(aldev, buff, duration);
+    for (unsigned long i = 0; i < duration; i++) { if (left) left[i] = buff[i * 2]; if (right) right[i] = buff[i * 2 + 1]; }
 
     return 0;
 }

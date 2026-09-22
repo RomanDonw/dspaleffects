@@ -219,28 +219,18 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     
     const float *inleft = lapi->getportbuffer(inleftport, duration);
     const float *inright = lapi->getportbuffer(inrightport, duration);
-    size_t currframesize = (duration + 1) * sizeof(float) * 2;
-
-    static float *intlvdata = NULL;
-    static size_t intlvsize = 0;
-    if (intlvsize != currframesize)
-    {
-        void *new = realloc(intlvdata, currframesize);
-        if (!new) { puts("memory reallocation failed"); return 1; }
-        intlvdata = new;
-        intlvsize = currframesize;
-    }
-
-    for (size_t i = 0; i < ((size_t)duration) << 1; i++)
-    { intlvdata[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
     
+    alSourceRewind(source);
     alSourcei(source, AL_BUFFER, 0);
-    alBufferData(buffer, AL_FORMAT_STEREO_FLOAT32, intlvdata, currframesize, rate);
-    alSourcei(source, AL_BUFFER, buffer);
     
-    ALint state;
-    alGetSourcei(source, AL_SOURCE_STATE, &state);
-    if (state != AL_PLAYING) alSourcePlay(source);
+    size_t buffsize = (duration + 1) * sizeof(float) * 2;
+    float buff[buffsize];
+    for (size_t i = 0; i < ((size_t)duration) << 1; i++)
+    { buff[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
+    alBufferData(buffer, AL_FORMAT_STEREO_FLOAT32, buff, buffsize, rate);
+
+    alSourcei(source, AL_BUFFER, buffer);
+    alSourcePlay(source);
 
     return albase_render(outleft, outright, duration, rate);
 }
