@@ -11,12 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-
-#include <al.h>
-#include <alc.h>
-#include <alext.h>
-#include <efx-presets.h>
 
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
@@ -116,7 +110,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         }
     }
 
-    if (albase_init(48000)) return 1;
+    if (albase_init(48000, true)) return 1;
 
     // ===============================
 

@@ -10,8 +10,6 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 
 #include <alc.h>
@@ -25,29 +23,36 @@ static ALCcontext *alctx;
 static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
 static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
-static unsigned long currrate;
 static bool inited = false;
+static unsigned long currrate;
+static bool enableerrorlog;
 
-char albase_init(unsigned long initrate)
+#define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
+
+char albase_init(unsigned long initrate, bool errorlog)
 {
     if (inited) return 1;
+    enableerrorlog = errorlog;
 
     if (!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback"))
-    { puts("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
+    { ERRORLOG("required \"ALC_SOFT_loopback\" OpenAL extension doesn't supported on this platform"); return 1; }
     LPALCLOOPBACKOPENDEVICESOFT alcLoopbackOpenDeviceSOFT = alcGetProcAddress(NULL, "alcLoopbackOpenDeviceSOFT");
-    if (!alcLoopbackOpenDeviceSOFT) { puts("failed to dynamicly load alcLoopbackOpenDeviceSOFT OpenAL function"); return 1; }
-    if (!(aldev = alcLoopbackOpenDeviceSOFT(NULL))) { puts("error creating/opening OpenAL loopback device"); return 1; }
+    if (!alcLoopbackOpenDeviceSOFT) { ERRORLOG("failed loading alcLoopbackOpenDeviceSOFT OpenAL function"); return 1; }
+    if (!(aldev = alcLoopbackOpenDeviceSOFT(NULL))) { ERRORLOG("error creating/opening OpenAL loopback device"); return 1; }
     
     // ===============================
 
     if (!alcIsExtensionPresent(aldev, "ALC_SOFT_output_limiter"))
-    { puts("required \"ALC_SOFT_output_limiter\" OpenAL extension doesn't supported by loopback device on this platform"); return 1; }
+    { ERRORLOG("required \"ALC_SOFT_output_limiter\" OpenAL extension doesn't supported by loopback device on this platform"); return 1; }
     if (!alcIsExtensionPresent(aldev, "ALC_EXT_EFX"))
-    { puts("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported by loopback device on this platform"); return 1; }
+    { ERRORLOG("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported by loopback device on this platform"); return 1; }
+    if (!alcIsExtensionPresent(aldev, "ALC_SOFT_HRTF"))
+    { ERRORLOG("required \"ALC_SOFT_HRTF\" OpenAL extension doesn't supported by loopback device on this platform"); return 1; }
+
     if (!(alcRenderSamplesSOFT = alcGetProcAddress(aldev, "alcRenderSamplesSOFT")))
-    { puts("required alcRenderSamplesSOFT OpenAL function doesn't supported by loopback device on this platform"); return 1; }
+    { ERRORLOG("failed loading alcRenderSamplesSOFT OpenAL function"); return 1; }
     if (!(alcResetDeviceSOFT = alcGetProcAddress(aldev, "alcResetDeviceSOFT")))
-    { puts("required alcResetDeviceSOFT OpenAL function doesn't supported by loopback device on this platform"); return 1; }
+    { ERRORLOG("failed loading alcResetDeviceSOFT OpenAL function"); return 1; }
     
     {
         const ALint attrs[] =
@@ -58,7 +63,7 @@ char albase_init(unsigned long initrate)
             ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
             0
         };
-        if (!(alctx = alcCreateContext(aldev, attrs))) { puts("error creating OpenAL context for loopback device"); return 1; }
+        if (!(alctx = alcCreateContext(aldev, attrs))) { ERRORLOG("error creating OpenAL context for loopback device"); return 1; }
         currrate = initrate;
     }
     alcMakeContextCurrent(alctx);
@@ -66,20 +71,20 @@ char albase_init(unsigned long initrate)
     // ===============================
 
     if (!(alGenAuxiliaryEffectSlots = alGetProcAddress("alGenAuxiliaryEffectSlots")))
-    { puts("failed to load alGenAuxiliaryEffectSlots OpenAL function"); return 1; } 
+    { ERRORLOG("failed loading alGenAuxiliaryEffectSlots OpenAL function"); return 1; } 
     if (!(alAuxiliaryEffectSloti = alGetProcAddress("alAuxiliaryEffectSloti")))
-    { puts("failed to load alAuxiliaryEffectSloti OpenAL function"); return 1; }
+    { ERRORLOG("failed loading alAuxiliaryEffectSloti OpenAL function"); return 1; }
 
-    if (!(alGenEffects = alGetProcAddress("alGenEffects"))) { puts("failed to load alGenEffects OpenAL function"); return 1; }
-    if (!(alDeleteEffects = alGetProcAddress("alDeleteEffects"))) { puts("failed to load alDeleteEffects OpenAL function"); return 1; }
-    if (!(alEffecti = alGetProcAddress("alEffecti"))) { puts("failed to load alEffecti OpenAL function"); return 1; }
-    if (!(alEffectf = alGetProcAddress("alEffectf"))) { puts("failed to load alEffectf OpenAL function"); return 1; }
-    if (!(alEffectfv = alGetProcAddress("alEffectfv"))) { puts("failed to load alEffectfv OpenAL function"); return 1; }
+    if (!(alGenEffects = alGetProcAddress("alGenEffects"))) { ERRORLOG("failed loading alGenEffects OpenAL function"); return 1; }
+    if (!(alDeleteEffects = alGetProcAddress("alDeleteEffects"))) { ERRORLOG("failed loading alDeleteEffects OpenAL function"); return 1; }
+    if (!(alEffecti = alGetProcAddress("alEffecti"))) { ERRORLOG("failed loading alEffecti OpenAL function"); return 1; }
+    if (!(alEffectf = alGetProcAddress("alEffectf"))) { ERRORLOG("failed loading alEffectf OpenAL function"); return 1; }
+    if (!(alEffectfv = alGetProcAddress("alEffectfv"))) { ERRORLOG("failed loading alEffectfv OpenAL function"); return 1; }
     
-    if (!(alGenFilters = alGetProcAddress("alGenFilters"))) { puts("failed to load alGenFilters OpenAL function"); return 1; }
-    if (!(alDeleteFilters = alGetProcAddress("alDeleteFilters"))) { puts("failed to load alDeleteFilters OpenAL function"); return 1; }
-    if (!(alFilteri = alGetProcAddress("alFilteri"))) { puts("failed to load alFilteri OpenAL function"); return 1; }
-    if (!(alFilterf = alGetProcAddress("alFilterf"))) { puts("failed to load alFilterf OpenAL function"); return 1; }
+    if (!(alGenFilters = alGetProcAddress("alGenFilters"))) { ERRORLOG("failed loading alGenFilters OpenAL function"); return 1; }
+    if (!(alDeleteFilters = alGetProcAddress("alDeleteFilters"))) { ERRORLOG("failed loading alDeleteFilters OpenAL function"); return 1; }
+    if (!(alFilteri = alGetProcAddress("alFilteri"))) { ERRORLOG("failed loading alFilteri OpenAL function"); return 1; }
+    if (!(alFilterf = alGetProcAddress("alFilterf"))) { ERRORLOG("failed loading alFilterf OpenAL function"); return 1; }
 
     inited = true;
     return 0;
@@ -99,7 +104,7 @@ char albase_render(float interleaved[], unsigned long duration, unsigned long ra
             ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
             0
         };
-        if (!alcResetDeviceSOFT(aldev, attrs)) return 1;
+        if (!alcResetDeviceSOFT(aldev, attrs)) { ERRORLOG("failed to change sample rate of loopback device"); return 1; }
         currrate = rate;
     }
     
