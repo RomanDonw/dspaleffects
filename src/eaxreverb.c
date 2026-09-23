@@ -26,6 +26,8 @@ static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
 static bool allowidlerenders = false;
 
+static void printeffectprops(ALuint effect);
+
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
     if (jsonutil_getvec3f(jobj, vec3f)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
@@ -190,8 +192,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     ALuint slot;
     alGenAuxiliaryEffectSlots(1, &slot);
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
-    alDeleteEffects(1, &effect);
-    
     alAuxiliaryEffectSlotf(slot, AL_EFFECTSLOT_GAIN, effectgain);
     alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, AL_FILTER_NULL);
     
@@ -200,11 +200,14 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alGenBuffers(1, &buffer);
 
     // ===============================
-    
+
     printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
         inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
-    if (configfilename) printf("configfilename: %s\n", configfilename);
-    else puts("config file not specified");
+    configfilename ? printf("configfilename: %s\n", configfilename) : puts("config file not specified");
+
+    printeffectprops(effect);
+    alDeleteEffects(1, &effect);
+    
     *sysname = "eaxreverb";
     *dispname = "OpenAL EAX Reverb.";
     return 0;
@@ -243,4 +246,34 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     }
 
     return 0;
+}
+
+static void printeffectprops(ALuint effect)
+{
+    puts("effectprops:");
+
+    union { float f3[3]; int i; } v;
+    alGetEffectf(effect, AL_EAXREVERB_DENSITY, v.f3); printf("  density: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DIFFUSION, v.f3); printf("  diffusion: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_GAIN, v.f3); printf("  gain: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_GAINHF, v.f3); printf("  gainHF: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_GAINLF, v.f3); printf("  gainLF: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DECAY_TIME, v.f3); printf("  decayTime: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DECAY_HFRATIO, v.f3); printf("  decayHFRatio: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DECAY_LFRATIO, v.f3); printf("  decayLFRatio: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_REFLECTIONS_GAIN, v.f3); printf("  reflectionsGain: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_REFLECTIONS_DELAY, v.f3); printf("  reflectionsDelay: %f\n", *v.f3);
+    alGetEffectfv(effect, AL_EAXREVERB_REFLECTIONS_PAN, v.f3); printf("  reflectionsPan: [%f, %f, %f]\n", v.f3[0], v.f3[1], v.f3[2]);
+    alGetEffectf(effect, AL_EAXREVERB_LATE_REVERB_GAIN, v.f3); printf("  lateReverbGain: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_LATE_REVERB_DELAY, v.f3); printf("  lateReverbDelay: %f\n", *v.f3);
+    alGetEffectfv(effect, AL_EAXREVERB_LATE_REVERB_PAN, v.f3); printf("  lateReverbPan: [%f, %f, %f]\n", v.f3[0], v.f3[1], v.f3[2]);
+    alGetEffectf(effect, AL_EAXREVERB_ECHO_TIME, v.f3); printf("  echoTime: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_ECHO_DEPTH, v.f3); printf("  echoDepth: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_MODULATION_TIME, v.f3); printf("  modulationTime: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_MODULATION_DEPTH, v.f3); printf("  modulationDepth: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_AIR_ABSORPTION_GAINHF, v.f3); printf("  airAbsorptionGainHF: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_HFREFERENCE, v.f3); printf("  HFReference: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_LFREFERENCE, v.f3); printf("  LFReference: %f\n", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, v.f3); printf("  roomRolloffFactor: %f\n", *v.f3);
+    alGetEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, &v.i); printf("  decayHFLimit: %s\n", v.i ? "true" : "false");
 }
