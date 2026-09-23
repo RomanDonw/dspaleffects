@@ -183,6 +183,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alFilterf(filter, AL_LOWPASS_GAINHF, 1);
     alFilterf(filter, AL_LOWPASS_GAIN, origgain);
     alSourcei(source, AL_DIRECT_FILTER, filter);
+    alDeleteFilters(1, &filter);
     
     // ===============================
     
@@ -191,9 +192,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
     
-    alFilterf(filter, AL_LOWPASS_GAIN, effectgain);
-    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
-    alDeleteFilters(1, &filter);
+    alAuxiliaryEffectSlotf(slot, AL_EFFECTSLOT_GAIN, effectgain);
+    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, AL_FILTER_NULL);
     
     // ===============================
 
