@@ -12,7 +12,15 @@ endmacro()
 find_package(json-c CONFIG REQUIRED)
 find_package(OpenAL REQUIRED)
 
-add_subdirectory("albase/")
+# ========================
+
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/alutil/*.h" "src/alutil/*.c")
+add_library(alutil OBJECT ${SOURCES})
+unset(SOURCES)
+target_link_libraries(alutil PUBLIC OpenAL::OpenAL)
+set_target_properties(alutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# ========================
 
 file(GLOB SOURCES CONFIGURE_DEPENDS "src/jsonutil/*.h" "src/jsonutil/*.c")
 add_library(jsonutil OBJECT ${SOURCES})
@@ -20,12 +28,14 @@ unset(SOURCES)
 target_link_libraries(jsonutil PUBLIC json-c::json-c)
 set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# ========================
+
 add_library(dspeaxreverb SHARED "src/eaxreverb.c")
 set_target_properties(dspeaxreverb PROPERTIES PREFIX "")
-target_link_libraries(dspeaxreverb PRIVATE dspalbase jsonutil)
-target_defsym(dspeaxreverb "dspmodule_cleanup" "albase_quit")
+target_link_libraries(dspeaxreverb PRIVATE alutil jsonutil)
+target_defsym(dspeaxreverb "dspmodule_cleanup" "alutil_quit")
 
 #add_library(dspchorus SHARED "src/chorus.c")
 #set_target_properties(dspchorus PROPERTIES PREFIX "")
-#target_link_libraries(dspchorus PRIVATE dspalbase jsonutil)
-#target_defsym(dspchorus "dspmodule_cleanup" "albase_quit")
+#target_link_libraries(dspchorus PRIVATE alutil jsonutil)
+#target_defsym(dspchorus "dspmodule_cleanup" "alutil_quit")

@@ -4,16 +4,16 @@
     file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
 
-#ifndef ALBASE_MAIN_H
-#define ALBASE_MAIN_H
+#ifndef ALUTIL_GENERAL_H
+#define ALUTIL_GENERAL_H
 
 #include <stdbool.h>
 #include <al.h>
 
 // all these functions returns 0 on success.
 
-char albase_init(unsigned long firstrate, bool errorlog);
-char albase_render(float interleaved[], unsigned long duration, unsigned long rate);
-char albase_quit(void);
+char alutil_init(unsigned long firstrate, bool errorlog);
+char alutil_render(float interleaved[], unsigned long duration, unsigned long rate);
+char alutil_quit(void);
 
 #endif

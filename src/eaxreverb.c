@@ -15,8 +15,8 @@
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 
-#include "albase/main.h"
-#include "albase/EFX.h"
+#include "alutil/general.h"
+#include "alutil/EFX.h"
 #include "jsonutil/jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
@@ -117,8 +117,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         }
     }
 
-    if (albase_init(48000, true)) return 1;
-    if (albase_loadEFX()) return 1;
+    if (alutil_init(48000, true)) return 1;
+    if (alutil_loadEFX()) return 1;
 
     // ===============================
 
@@ -207,7 +207,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     printeffectprops(effect);
     alDeleteEffects(1, &effect);
-    
+
     *sysname = "eaxreverb";
     *dispname = "OpenAL EAX Reverb.";
     return 0;
@@ -238,7 +238,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     // ===============================
 
-    if (albase_render(buff, duration, rate)) return 1;
+    if (alutil_render(buff, duration, rate)) return 1;
     if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
     {
         if (outleft) outleft[i] = buff[i * 2];

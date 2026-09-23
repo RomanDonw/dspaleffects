@@ -4,9 +4,9 @@
     file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
 
-#include "albase/main.h"
-#define ALBASE_EFX_IMPL
-#include "albase/EFX.h"
+#include "general.h"
+#define ALUTIL_EFX_IMPL
+#include "EFX.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -29,7 +29,7 @@ static bool enableerrorlog;
 
 #define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
 
-char albase_init(unsigned long initrate, bool errorlog)
+char alutil_init(unsigned long initrate, bool errorlog)
 {
     if (inited) return 1;
     enableerrorlog = errorlog;
@@ -74,7 +74,7 @@ char albase_init(unsigned long initrate, bool errorlog)
     return 0;
 }
 
-char albase_render(float interleaved[], unsigned long duration, unsigned long rate)
+char alutil_render(float interleaved[], unsigned long duration, unsigned long rate)
 {
     if (!(inited && duration)) return 1;
     
@@ -98,7 +98,7 @@ char albase_render(float interleaved[], unsigned long duration, unsigned long ra
     return 0;
 }
 
-char albase_quit(void)
+char alutil_quit(void)
 {
     if (!inited) return 1;
 
@@ -110,7 +110,7 @@ char albase_quit(void)
     return 0;
 }
 
-char albase_loadEFX(void)
+char alutil_loadEFX(void)
 {
     if (!inited) return 1;
 
