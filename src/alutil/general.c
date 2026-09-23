@@ -29,7 +29,7 @@ static bool enableerrorlog;
 
 #define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
 
-char alutil_init(unsigned long initrate, bool errorlog)
+char alutil_init(unsigned long initrate, bool errorlog, bool limitoutput)
 {
     if (inited) return 1;
     enableerrorlog = errorlog;
@@ -60,7 +60,7 @@ char alutil_init(unsigned long initrate, bool errorlog)
             ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
             ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
             ALC_FREQUENCY, initrate,
-            ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
+            ALC_OUTPUT_LIMITER_SOFT, limitoutput ? AL_TRUE : AL_FALSE,
             0
         };
         if (!(alctx = alcCreateContext(aldev, attrs))) { ERRORLOG("error creating OpenAL context for loopback device"); return 1; }
