@@ -13,36 +13,26 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <al.h>
-#include <alc.h>
-#include <alext.h>
-#include <efx-presets.h>
-
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 
-#include "albase/general.h"
-#include "albase/EFX.h"
+#include "alutil/general.h"
+#include "alutil/EFX.h"
 #include "jsonutil/jsonutil.h"
 
 const unsigned short dspmodule_requiredAPIversion = 1;
 
-static float origgain = 1, effectgain = 1;
+static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
+static void *inleftport, *inrightport, *outleftport, *outrightport;
+static ALuint source, buffer;
+static bool allowidlerenders = false;
 
-#define GETFLTVEC3CONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getvec3f(jobj, vec3f)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
-    alEffectfv(effect, alname, vec3f);
+static void printeffectprops(ALuint effect);
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
     if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
     if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
     alEffectf(effect, alname, *vec3f);
-
-#define GETBOOLCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getbool(jobj, &flag)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
-    alEffecti(effect, alname, flag);
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
@@ -50,24 +40,24 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     struct json_object *configroot = NULL;
     {
         int p;
-        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:")) != -1)
+        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:i:")) != -1)
         {
             switch (p)
             {
                 case 'a':
-                    if (sscanf(optarg, "%f", &albase_inampmod) < 1) { puts("error parsing option -a"); return 1; }
+                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a"); return 1; }
                     break;
 
                 case 'A':
-                    if (sscanf(optarg, "%f", &albase_outampmod) < 1) { puts("error parsing option -A"); return 1; }
+                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A"); return 1; }
                     break;
 
                 case 'v':
-                    if (sscanf(optarg, "%f", &albase_involmod) < 1) { puts("error parsing option -v"); return 1; }
+                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v"); return 1; }
                     break;
 
                 case 'V':
-                    if (sscanf(optarg, "%f", &albase_outvolmod) < 1) { puts("error parsing option -V"); return 1; }
+                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V"); return 1; }
                     break;
 
                 case 'g':
@@ -110,11 +100,16 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                         fclose(f);
                     return 1;
                 }
+
+                case 'i':
+                    allowidlerenders = true;
+                    break;
             }
         }
     }
 
-    if (albase_init(lapi)) return 1;
+    if (alutil_init(48000, true)) return 1;
+    if (alutil_loadEFX()) return 1;
 
     // ===============================
 
@@ -143,33 +138,119 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
         json_object_put(configroot);
     }
-
-    // ===============================
     
-    ALuint filter, slot;
+    // ===============================
+
+    if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
+    { puts("error adding port for input left channel"); return 1; }
+    if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
+    { puts("error adding port for input right channel"); return 1; }
+    
+    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding port for output left channel"); return 1; }
+    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding port for output right channel"); return 1; }
+    
+    // ===============================
+
+    alGenSources(1, &source);
+    
+    alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcei(source, AL_ROLLOFF_FACTOR, 0);
+    
+    ALuint filter;
     alGenFilters(1, &filter);
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     alFilterf(filter, AL_LOWPASS_GAINHF, 1);
-    alFilterf(filter, AL_LOWPASS_GAIN, effectgain);
-    
-    alGenAuxiliaryEffectSlots(1, &slot);
-    alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
-    alDeleteEffects(1, &effect);
-
-    alSource3i(albase_source, AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
-
     alFilterf(filter, AL_LOWPASS_GAIN, origgain);
-    alSourcei(albase_source, AL_DIRECT_FILTER, filter);
+    alSourcei(source, AL_DIRECT_FILTER, filter);
     alDeleteFilters(1, &filter);
     
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\n",
-        albase_inampmod, albase_involmod, origgain, effectgain, albase_outampmod, albase_outvolmod);
-    if (configfilename) printf("configfilename: %s\n", configfilename);
-    else puts("config file not specified");
+    // ===============================
+    
+    ALuint slot;
+    alGenAuxiliaryEffectSlots(1, &slot);
+    alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
+    alAuxiliaryEffectSlotf(slot, AL_EFFECTSLOT_GAIN, effectgain);
+    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, AL_FILTER_NULL);
+    
+    // ===============================
+
+    alGenBuffers(1, &buffer);
+
+    // ===============================
+
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
+        inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
+    configfilename ? printf("configfilename: %s\n", configfilename) : puts("config file not specified");
+
+    printeffectprops(effect);
+    alDeleteEffects(1, &effect);
+
     *sysname = "chorus";
     *dispname = "OpenAL Chorus";
     return 0;
 }
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
-{ return albase_process(lapi, duration, rate); }
+{
+    float *outleft = lapi->getportbuffer(outleftport, duration);
+    float *outright = lapi->getportbuffer(outrightport, duration);
+    if (!(allowidlerenders || outleft || outright)) return 0;
+    
+    const float *inleft = lapi->getportbuffer(inleftport, duration);
+    const float *inright = lapi->getportbuffer(inrightport, duration);
+
+    // ===============================
+    
+    alSourceRewind(source);
+    alSourcei(source, AL_BUFFER, 0);
+
+    size_t buffsize = (duration + 1) * sizeof(float) * 2;
+    float buff[buffsize];
+    for (size_t i = 0; i < ((size_t)duration) << 1; i++)
+    { buff[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
+    alBufferData(buffer, AL_FORMAT_STEREO_FLOAT32, buff, buffsize, rate);
+
+    alSourcei(source, AL_BUFFER, buffer);
+    alSourcePlay(source);
+
+    // ===============================
+
+    if (alutil_render(buff, duration, rate)) return 1;
+    if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
+    {
+        if (outleft) outleft[i] = buff[i * 2];
+        if (outright) outright[i] = buff[i * 2 + 1];
+    }
+
+    return 0;
+}
+
+static void printeffectprops(ALuint effect)
+{
+    puts("effectprops:");
+
+    union { float f; int i; } v;
+    alGetEffectf(effect, AL_CHORUS_DELAY, &v.f); printf("  delay: %f\n", v.f);
+    alGetEffectf(effect, AL_CHORUS_DEPTH, &v.f); printf("  depth: %f\n", v.f);
+    alGetEffectf(effect, AL_CHORUS_FEEDBACK, &v.f); printf("  feedback: %f\n", v.f);
+    alGetEffectf(effect, AL_CHORUS_PHASE, &v.f); printf("  phase: %f\n", v.f);
+    alGetEffectf(effect, AL_CHORUS_RATE, &v.f); printf("  rate: %f\n", v.f);
+
+    alGetEffecti(effect, AL_CHORUS_WAVEFORM, &v.i);
+    printf("  waveform: ");
+    switch (v.i)
+    {
+        case AL_CHORUS_WAVEFORM_SINUSOID:
+            puts("sinusoid");
+            break;
+
+        case AL_CHORUS_WAVEFORM_TRIANGLE:
+            puts("triangle");
+            break;
+
+        default:
+            puts("(undefined)");
+    }
+}

@@ -30,12 +30,12 @@ set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # ========================
 
-add_library(dspeaxreverb SHARED "src/eaxreverb.c")
-set_target_properties(dspeaxreverb PROPERTIES PREFIX "")
-target_link_libraries(dspeaxreverb PRIVATE alutil jsonutil)
-target_defsym(dspeaxreverb "dspmodule_cleanup" "alutil_quit")
+macro(defmod target source)
+    add_library(${target} SHARED ${source})
+    set_target_properties(${target} PROPERTIES PREFIX "")
+    target_link_libraries(${target} PRIVATE alutil jsonutil)
+    target_defsym(${target} "dspmodule_cleanup" "alutil_quit")
+endmacro()
 
-#add_library(dspchorus SHARED "src/chorus.c")
-#set_target_properties(dspchorus PROPERTIES PREFIX "")
-#target_link_libraries(dspchorus PRIVATE alutil jsonutil)
-#target_defsym(dspchorus "dspmodule_cleanup" "alutil_quit")
+defmod(dspeaxreverb "src/eaxreverb.c")
+defmod(dspchorus "src/chorus.c")
