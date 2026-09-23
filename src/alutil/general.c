@@ -155,3 +155,11 @@ char alutil_loadEFX(void)
 
     return 0;
 }
+
+/*
+char alutil_checkALextension(const char *name)
+{
+    if (!inited) return -1;
+    return al
+}
+*/

@@ -39,3 +39,4 @@ endmacro()
 
 defmod(dspeaxreverb "src/eaxreverb.c")
 defmod(dspchorus "src/chorus.c")
+defmod(dspoldradio "src/oldradio.c")
