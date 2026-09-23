@@ -117,11 +117,6 @@ char albase_loadEFX(void)
     if (!alcIsExtensionPresent(aldev, "ALC_EXT_EFX"))
     { ERRORLOG("required \"ALC_EXT_EFX\" OpenAL extension (OpenAL EFX) doesn't supported by loopback device on this platform"); return 1; }
 
-    if (!(alGenAuxiliaryEffectSlots = alGetProcAddress("alGenAuxiliaryEffectSlots")))
-    { ERRORLOG("failed loading alGenAuxiliaryEffectSlots OpenAL function"); return 1; } 
-    if (!(alAuxiliaryEffectSloti = alGetProcAddress("alAuxiliaryEffectSloti")))
-    { ERRORLOG("failed loading alAuxiliaryEffectSloti OpenAL function"); return 1; }
-
     if (!(alGenAuxiliaryEffectSlots = alGetProcAddress("alGenAuxiliaryEffectSlots"))) { ERRORLOG("failed loading alGenAuxiliaryEffectSlots OpenAL function"); return 1; }
     if (!(alDeleteAuxiliaryEffectSlots = alGetProcAddress("alDeleteAuxiliaryEffectSlots"))) { ERRORLOG("failed loading alDeleteAuxiliaryEffectSlots OpenAL function"); return 1; }
     if (!(alIsAuxiliaryEffectSlot = alGetProcAddress("alIsAuxiliaryEffectSlot"))) { ERRORLOG("failed loading alIsAuxiliaryEffectSlot OpenAL function"); return 1; }
@@ -129,6 +124,10 @@ char albase_loadEFX(void)
     if (!(alAuxiliaryEffectSlotiv = alGetProcAddress("alAuxiliaryEffectSlotiv"))) { ERRORLOG("failed loading alAuxiliaryEffectSlotiv OpenAL function"); return 1; }
     if (!(alAuxiliaryEffectSlotf = alGetProcAddress("alAuxiliaryEffectSlotf"))) { ERRORLOG("failed loading alAuxiliaryEffectSlotf OpenAL function"); return 1; }
     if (!(alAuxiliaryEffectSlotfv = alGetProcAddress("alAuxiliaryEffectSlotfv"))) { ERRORLOG("failed loading alAuxiliaryEffectSlotfv OpenAL function"); return 1; }
+    if (!(alGetAuxiliaryEffectSloti = alGetProcAddress("alGetAuxiliaryEffectSloti"))) { ERRORLOG("failed loading alGetAuxiliaryEffectSloti OpenAL function"); return 1; }
+    if (!(alGetAuxiliaryEffectSlotiv = alGetProcAddress("alGetAuxiliaryEffectSlotiv"))) { ERRORLOG("failed loading alGetAuxiliaryEffectSlotiv OpenAL function"); return 1; }
+    if (!(alGetAuxiliaryEffectSlotf = alGetProcAddress("alGetAuxiliaryEffectSlotf"))) { ERRORLOG("failed loading alGetAuxiliaryEffectSlotf OpenAL function"); return 1; }
+    if (!(alGetAuxiliaryEffectSlotfv = alGetProcAddress("alGetAuxiliaryEffectSlotfv"))) { ERRORLOG("failed loading alGetAuxiliaryEffectSlotfv OpenAL function"); return 1; }
 
     if (!(alGenEffects = alGetProcAddress("alGenEffects"))) { ERRORLOG("failed loading alGenEffects OpenAL function"); return 1; }
     if (!(alDeleteEffects = alGetProcAddress("alDeleteEffects"))) { ERRORLOG("failed loading alDeleteEffects OpenAL function"); return 1; }
@@ -137,6 +136,10 @@ char albase_loadEFX(void)
     if (!(alEffectiv = alGetProcAddress("alEffectiv"))) { ERRORLOG("failed loading alEffectiv OpenAL function"); return 1; }
     if (!(alEffectf = alGetProcAddress("alEffectf"))) { ERRORLOG("failed loading alEffectf OpenAL function"); return 1; }
     if (!(alEffectfv = alGetProcAddress("alEffectfv"))) { ERRORLOG("failed loading alEffectfv OpenAL function"); return 1; }
+    if (!(alGetEffecti = alGetProcAddress("alGetEffecti"))) { ERRORLOG("failed loading alGetEffecti OpenAL function"); return 1; }
+    if (!(alGetEffectiv = alGetProcAddress("alGetEffectiv"))) { ERRORLOG("failed loading alGetEffectiv OpenAL function"); return 1; }
+    if (!(alGetEffectf = alGetProcAddress("alGetEffectf"))) { ERRORLOG("failed loading alGetEffectf OpenAL function"); return 1; }
+    if (!(alGetEffectfv = alGetProcAddress("alGetEffectfv"))) { ERRORLOG("failed loading alGetEffectfv OpenAL function"); return 1; }
     
     if (!(alGenFilters = alGetProcAddress("alGenFilters"))) { ERRORLOG("failed loading alGenFilters OpenAL function"); return 1; }
     if (!(alDeleteFilters = alGetProcAddress("alDeleteFilters"))) { ERRORLOG("failed loading alDeleteFilters OpenAL function"); return 1; }
@@ -145,6 +148,10 @@ char albase_loadEFX(void)
     if (!(alFilteriv = alGetProcAddress("alFilteriv"))) { ERRORLOG("failed loading alFilteriv OpenAL function"); return 1; }
     if (!(alFilterf = alGetProcAddress("alFilterf"))) { ERRORLOG("failed loading alFilterf OpenAL function"); return 1; }
     if (!(alFilterfv = alGetProcAddress("alFilterfv"))) { ERRORLOG("failed loading alFilterfv OpenAL function"); return 1; }
+    if (!(alGetFilteri = alGetProcAddress("alGetFilteri"))) { ERRORLOG("failed loading alGetFilteri OpenAL function"); return 1; }
+    if (!(alGetFilteriv = alGetProcAddress("alGetFilteriv"))) { ERRORLOG("failed loading alGetFilteriv OpenAL function"); return 1; }
+    if (!(alGetFilterf = alGetProcAddress("alGetFilterf"))) { ERRORLOG("failed loading alGetFilterf OpenAL function"); return 1; }
+    if (!(alGetFilterfv = alGetProcAddress("alGetFilterfv"))) { ERRORLOG("failed loading alGetFilterfv OpenAL function"); return 1; }
 
     return 0;
 }
