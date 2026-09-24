@@ -16,6 +16,4 @@ char alutil_init(unsigned long firstrate, bool errorlog, bool limitoutput);
 char alutil_render(float interleaved[], unsigned long duration, unsigned long rate);
 char alutil_quit(void);
 
-//char alutil_checkALextension(const char *name); // returns 1 if ext. supported, 0 if not and -1 on error.
-
 #endif
