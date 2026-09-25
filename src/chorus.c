@@ -30,20 +30,47 @@ static bool allowidlerenders = false, strongconfoptcheck = true;
 static void printeffectprops(ALuint effect);
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
-    if (json_object_object_get_ex(configroot, strname, &jobj))\
     {\
-        if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
-        alEffectf(effect, alname, *vec3f);\
-    }\
-    else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }
+        if (json_object_object_get_ex(configroot, strname, &jobj))\
+        {\
+            if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+            alEffectf(effect, alname, *vec3f);\
+        }\
+        else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+    }
+
+struct floatopt
+{
+    bool has;
+    float value;
+} typedef floatopt;
+
+struct intopt
+{
+    bool has;
+    int value;
+} typedef intopt;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
     const char *configfilename = NULL;
     struct json_object *configroot = NULL;
+
+    floatopt floatopts[4] = {0};
+    intopt intopts[2] = {0};
+
     {
         int p;
-        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:is")) != -1)
+        static const struct option longopts[] =
+        {
+            { .name = "delay", .has_arg = required_argument, .val = 256, .flag = NULL },
+            { .name = "depth", .has_arg = required_argument, .val = 257, .flag = NULL },
+            { .name = "feedback", .has_arg = required_argument, .val = 258, .flag = NULL },
+            { .name = "rate", .has_arg = required_argument, .val = 259, .flag = NULL },
+            { .name = "phase", .has_arg = required_argument, .val = 260, .flag = NULL },
+            { .name = "waveform", .has_arg = required_argument, .val = 261, .flag = NULL }
+        };
+        while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", longopts, NULL)) != -1)
         {
             switch (p)
             {
@@ -111,6 +138,38 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 's':
                     strongconfoptcheck = false;
                     break;
+
+                case 256:
+                    if (sscanf(optarg, "%f", &floatopts[0].value) < 1) { puts("error parsing option --delay"); return 1; }
+                    floatopts[0].has = true;
+                    break;
+
+                case 257:
+                    if (sscanf(optarg, "%f", &floatopts[1].value) < 1) { puts("error parsing option --depth"); return 1; }
+                    floatopts[1].has = true;
+                    break;
+
+                case 258:
+                    if (sscanf(optarg, "%f", &floatopts[2].value) < 1) { puts("error parsing option --feedback"); return 1; }
+                    floatopts[2].has = true;
+                    break;
+                
+                case 259:
+                    if (sscanf(optarg, "%f", &floatopts[3].value) < 1) { puts("error parsing option --rate"); return 1; }
+                    floatopts[3].has = true;
+                    break;
+
+                case 260:
+                    if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase"); return 1; }
+                    intopts[0].has = true;
+                    break;
+
+                case 261:
+                    if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
+                    else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
+                    else { printf("incorrect \"--waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
+                    intopts[1].has = true;
+                    break;
             }
         }
     }
@@ -129,22 +188,43 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         bool flag;
         float vec3f[3];
         struct json_object *jobj;
-
-        GETFLTCONFOPTHELPER("delay", AL_CHORUS_DELAY);
-        GETFLTCONFOPTHELPER("depth", AL_CHORUS_DEPTH);
-        GETFLTCONFOPTHELPER("feedback", AL_CHORUS_FEEDBACK);
-        GETFLTCONFOPTHELPER("phase", AL_CHORUS_PHASE);
-        GETFLTCONFOPTHELPER("rate", AL_CHORUS_RATE);
         
-        if (!json_object_object_get_ex(configroot, "waveform", &jobj)) { puts("key \"waveform\" doesnt found in config file"); return 1; }
-        if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
-        const char *waveform = json_object_get_string(jobj);
-        if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
-        else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
-        else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"triangle\", got: \"%s\")\n", waveform); return 1; }
+        if (!floatopts[0].has) GETFLTCONFOPTHELPER("delay", AL_CHORUS_DELAY);
+        if (!floatopts[1].has) GETFLTCONFOPTHELPER("depth", AL_CHORUS_DEPTH);
+        if (!floatopts[2].has) GETFLTCONFOPTHELPER("feedback", AL_CHORUS_FEEDBACK);
+        if (!floatopts[3].has) GETFLTCONFOPTHELPER("rate", AL_CHORUS_RATE);
+
+        if (!intopts[0].has)
+        {
+            if (json_object_object_get_ex(configroot, "phase", &jobj))
+            {
+                if (json_object_get_type(jobj) != json_type_int) { puts("parsing \"phase\" config option failed (required int)"); return 1; }
+                alEffecti(effect, AL_CHORUS_PHASE, json_object_get_int(jobj));
+            }
+            else if (strongconfoptcheck) { puts("key \"phase\" doesnt found in config file"); return 1; }
+        }
+        
+        if (!intopts[1].has)
+        {
+            if (json_object_object_get_ex(configroot, "waveform", &jobj))
+            {
+                if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
+                const char *waveform = json_object_get_string(jobj);
+                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
+                else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
+                else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", waveform); return 1; }
+            }
+            else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }
+        }
 
         json_object_put(configroot);
     }
+    if (floatopts[0].has) alEffectf(effect, AL_CHORUS_DELAY, floatopts[0].value);
+    if (floatopts[1].has) alEffectf(effect, AL_CHORUS_DEPTH, floatopts[1].value);
+    if (floatopts[2].has) alEffectf(effect, AL_CHORUS_FEEDBACK, floatopts[2].value);
+    if (floatopts[3].has) alEffectf(effect, AL_CHORUS_RATE, floatopts[3].value);
+    if (intopts[0].has) alEffecti(effect, AL_CHORUS_PHASE, intopts[0].value);
+    if (intopts[1].has) alEffecti(effect, AL_CHORUS_WAVEFORM, intopts[1].value);
     
     // ===============================
 
@@ -242,7 +322,7 @@ static void printeffectprops(ALuint effect)
     alGetEffectf(effect, AL_CHORUS_DELAY, &v.f); printf("  delay: %f\n", v.f);
     alGetEffectf(effect, AL_CHORUS_DEPTH, &v.f); printf("  depth: %f\n", v.f);
     alGetEffectf(effect, AL_CHORUS_FEEDBACK, &v.f); printf("  feedback: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_PHASE, &v.f); printf("  phase: %f\n", v.f);
+    alGetEffecti(effect, AL_CHORUS_PHASE, &v.i); printf("  phase: %i\n", v.i);
     alGetEffectf(effect, AL_CHORUS_RATE, &v.f); printf("  rate: %f\n", v.f);
 
     alGetEffecti(effect, AL_CHORUS_WAVEFORM, &v.i);
