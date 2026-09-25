@@ -74,6 +74,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         {
             switch (p)
             {
+                /*
+                    ===========================
+                    ====== SHORT OPTIONS ======
+                    ===========================
+                */
+
                 case 'a':
                     if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a"); return 1; }
                     break;
@@ -138,6 +144,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 's':
                     strongconfoptcheck = false;
                     break;
+
+                /*
+                    ==========================
+                    ====== LONG OPTIONS ======
+                    ===========================
+                */
 
                 case 256:
                     if (sscanf(optarg, "%f", &floatopts[0].value) < 1) { puts("error parsing option --delay"); return 1; }
