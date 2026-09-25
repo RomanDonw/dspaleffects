@@ -24,24 +24,33 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
-static bool allowidlerenders = false;
+static bool allowidlerenders = false, strongconfoptcheck = true;
 
 static void printeffectprops(ALuint effect);
 
 #define GETFLTVEC3CONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getvec3f(jobj, vec3f)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
-    alEffectfv(effect, alname, vec3f);
+    if (json_object_object_get_ex(configroot, strname, &jobj))\
+    {\
+        if (jsonutil_getvec3f(jobj, vec3f)) { puts("failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
+        alEffectfv(effect, alname, vec3f);\
+    }\
+    else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }
 
 #define GETFLTCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
-    alEffectf(effect, alname, *vec3f);
+    if (json_object_object_get_ex(configroot, strname, &jobj))\
+    {\
+        if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+        alEffectf(effect, alname, *vec3f);\
+    }\
+    else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }
 
 #define GETBOOLCONFOPTHELPER(strname, alname) \
-    if (!json_object_object_get_ex(configroot, strname, &jobj)) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
-    if (jsonutil_getbool(jobj, &flag)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
-    alEffecti(effect, alname, flag);
+    if (json_object_object_get_ex(configroot, strname, &jobj))\
+    {\
+        if (jsonutil_getbool(jobj, &flag)) { puts("parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
+        alEffecti(effect, alname, flag);\
+    }\
+    else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
@@ -49,7 +58,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     struct json_object *configroot = NULL;
     {
         int p;
-        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:i")) != -1)
+        while ((p = getopt(argc, argv, "g:G:f:a:v:A:V:is")) != -1)
         {
             switch (p)
             {
@@ -112,6 +121,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
                 case 'i':
                     allowidlerenders = true;
+                    break;
+
+                case 's':
+                    strongconfoptcheck = false;
                     break;
             }
         }
