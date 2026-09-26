@@ -10,6 +10,7 @@ PipeWire real-time DSP-filters for [my own DSP-modules loader (loaddsp)](https:/
 - - loopback device (`ALC_SOFT_loopback`).
 - - output limiter (`ALC_SOFT_output_limiter`).
 - - HRTF (`ALC_SOFT_HRTF`).
+- - effect target (`AL_SOFT_effect_target`).
 - json-c.
 
 ## Usage
