@@ -29,7 +29,11 @@ static bool allowidlerenders = false, strongconfoptcheck = true;
 
 static void printeffectprops(ALuint effect);
 
-#define GETFLTCONFOPTHELPER(strname, alname) \
+struct floatopt { bool has; float value; } typedef floatopt;
+struct intopt { bool has; int value; } typedef intopt;
+
+#define GETFLTCONFOPTHELPER(floatoptsidx, strname, alname) \
+    if (!floatopts[floatoptsidx].has)\
     {\
         if (json_object_object_get_ex(configroot, strname, &jobj))\
         {\
@@ -39,17 +43,16 @@ static void printeffectprops(ALuint effect);
         else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
     }
 
-struct floatopt
-{
-    bool has;
-    float value;
-} typedef floatopt;
+#define PARSELONGFLOATOPT(optid, optindex, optname) \
+    case optid:\
+        if (sscanf(optarg, "%f", &floatopts[optindex].value) < 1) { puts("error parsing option --" optname " (required float)"); return 1; }\
+        floatopts[optindex].has = true;\
+        break;
 
-struct intopt
-{
-    bool has;
-    int value;
-} typedef intopt;
+#define SETEFFFLOATPROPFROMOPT(optindex, alname) \
+    if (floatopts[optindex].has) alEffectf(effect, alname, floatopts[optindex].value);
+#define SETEFFINTPROPFROMOPT(optindex, alname) \
+    if (intopts[optindex].has) alEffecti(effect, alname, intopts[optindex].value);
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
@@ -151,25 +154,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     ===========================
                 */
 
-                case 256:
-                    if (sscanf(optarg, "%f", &floatopts[0].value) < 1) { puts("error parsing option --delay (required float)"); return 1; }
-                    floatopts[0].has = true;
-                    break;
-
-                case 257:
-                    if (sscanf(optarg, "%f", &floatopts[1].value) < 1) { puts("error parsing option --depth (required float)"); return 1; }
-                    floatopts[1].has = true;
-                    break;
-
-                case 258:
-                    if (sscanf(optarg, "%f", &floatopts[2].value) < 1) { puts("error parsing option --feedback (required float)"); return 1; }
-                    floatopts[2].has = true;
-                    break;
-                
-                case 259:
-                    if (sscanf(optarg, "%f", &floatopts[3].value) < 1) { puts("error parsing option --rate (required float)"); return 1; }
-                    floatopts[3].has = true;
-                    break;
+                PARSELONGFLOATOPT(256, 0, "delay")
+                PARSELONGFLOATOPT(257, 1, "depth")
+                PARSELONGFLOATOPT(258, 2, "feedback")
+                PARSELONGFLOATOPT(259, 3, "rate")
 
                 case 260:
                     if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase (required integer)"); return 1; }
@@ -201,10 +189,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         float vec3f[3];
         struct json_object *jobj;
         
-        if (!floatopts[0].has) GETFLTCONFOPTHELPER("delay", AL_CHORUS_DELAY);
-        if (!floatopts[1].has) GETFLTCONFOPTHELPER("depth", AL_CHORUS_DEPTH);
-        if (!floatopts[2].has) GETFLTCONFOPTHELPER("feedback", AL_CHORUS_FEEDBACK);
-        if (!floatopts[3].has) GETFLTCONFOPTHELPER("rate", AL_CHORUS_RATE);
+        GETFLTCONFOPTHELPER(0, "delay", AL_CHORUS_DELAY);
+        GETFLTCONFOPTHELPER(1, "depth", AL_CHORUS_DEPTH);
+        GETFLTCONFOPTHELPER(2, "feedback", AL_CHORUS_FEEDBACK);
+        GETFLTCONFOPTHELPER(3, "rate", AL_CHORUS_RATE);
 
         if (!intopts[0].has)
         {
@@ -231,12 +219,14 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
         json_object_put(configroot);
     }
-    if (floatopts[0].has) alEffectf(effect, AL_CHORUS_DELAY, floatopts[0].value);
-    if (floatopts[1].has) alEffectf(effect, AL_CHORUS_DEPTH, floatopts[1].value);
-    if (floatopts[2].has) alEffectf(effect, AL_CHORUS_FEEDBACK, floatopts[2].value);
-    if (floatopts[3].has) alEffectf(effect, AL_CHORUS_RATE, floatopts[3].value);
-    if (intopts[0].has) alEffecti(effect, AL_CHORUS_PHASE, intopts[0].value);
-    if (intopts[1].has) alEffecti(effect, AL_CHORUS_WAVEFORM, intopts[1].value);
+
+    SETEFFFLOATPROPFROMOPT(0, AL_CHORUS_DELAY);
+    SETEFFFLOATPROPFROMOPT(1, AL_CHORUS_DEPTH);
+    SETEFFFLOATPROPFROMOPT(2, AL_CHORUS_FEEDBACK);
+    SETEFFFLOATPROPFROMOPT(3, AL_CHORUS_RATE);
+    
+    SETEFFINTPROPFROMOPT(0, AL_CHORUS_PHASE);
+    SETEFFINTPROPFROMOPT(1, AL_CHORUS_WAVEFORM);
     
     // ===============================
 

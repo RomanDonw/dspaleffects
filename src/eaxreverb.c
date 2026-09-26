@@ -145,6 +145,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         {
             switch (p)
             {
+                /*
+                    ===========================
+                    ====== SHORT OPTIONS ======
+                    ===========================
+                */
+
                 case 'a':
                     if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
                     break;
