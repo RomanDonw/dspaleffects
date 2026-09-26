@@ -6,7 +6,7 @@ PipeWire real-time DSP-filters for [my own DSP-modules loader (loaddsp)](https:/
 ## Dependencies
 - [loaddsp](https://github.com/RomanDonw/loaddsp).
 - OpenAL Soft with supported extensions:
-- - EFX (`AL_EXT_EFX`).
+- - EFX (`ALC_EXT_EFX`).
 - - loopback device (`ALC_SOFT_loopback`).
 - - output limiter (`ALC_SOFT_output_limiter`).
 - - HRTF (`ALC_SOFT_HRTF`).
