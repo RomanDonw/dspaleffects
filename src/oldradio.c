@@ -14,6 +14,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <samplerate.h>
+
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 
@@ -26,6 +28,7 @@ static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint sources[2], buffers[2];
 static bool allowidlerenders = false;
+static SRC_STATE *resamp1l, *resamp1r, *resamp2;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {   
@@ -46,6 +49,16 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
     { puts("error adding port for output right channel"); return 1; }
     
+    // ===============================
+
+    int error;
+    if (!(resamp1l = src_new(SRC_ZERO_ORDER_HOLD, 1, &error)))
+    { printf("error creating resampler for left input channel: %s\n", src_strerror(error)); return 1; }
+    if (!(resamp1r = src_new(SRC_ZERO_ORDER_HOLD, 1, &error)))
+    { printf("error creating resampler for right input channel: %s\n", src_strerror(error)); return 1; }
+    if (!(resamp2 = src_new(SRC_ZERO_ORDER_HOLD, 1, &error)))
+    { printf("error creating resampler for noise mono channel: %s\n", src_strerror(error)); return 1; }
+
     // ===============================
     
     alGenBuffers(2, buffers);
@@ -121,6 +134,9 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     size_t buffsize = (duration + 1) * sizeof(float) * 2;
     float buff[buffsize];
+
+    
+
     for (size_t i = 0; i < ((size_t)duration) << 1; i++)
     { buff[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
     alBufferData(buffers[0], AL_FORMAT_STEREO_FLOAT32, buff, buffsize, rate);

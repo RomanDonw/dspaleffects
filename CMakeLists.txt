@@ -11,6 +11,7 @@ endmacro()
 
 find_package(json-c CONFIG REQUIRED)
 find_package(OpenAL REQUIRED)
+find_package(SampleRate REQUIRED)
 
 # ========================
 
@@ -40,3 +41,4 @@ endmacro()
 defmod(dspeaxreverb "src/eaxreverb.c")
 defmod(dspchorus "src/chorus.c")
 defmod(dspoldradio "src/oldradio.c")
+target_link_libraries(dspoldradio PUBLIC SampleRate::samplerate)
