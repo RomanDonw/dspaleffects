@@ -81,28 +81,28 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 */
 
                 case 'a':
-                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a"); return 1; }
+                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
                     break;
 
                 case 'A':
-                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A"); return 1; }
+                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A (required float)"); return 1; }
                     break;
 
                 case 'v':
-                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v"); return 1; }
+                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v (required float)"); return 1; }
                     break;
 
                 case 'V':
-                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V"); return 1; }
+                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V (required float)"); return 1; }
                     break;
 
                 case 'g':
-                    if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -g"); return 1; }
+                    if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -g (required float)"); return 1; }
                     origgain = clampf(origgain, 0, 1);
                     break;
 
                 case 'G':
-                    if (sscanf(optarg, "%f", &effectgain) < 1) { puts("error parsing option -G"); return 1; }
+                    if (sscanf(optarg, "%f", &effectgain) < 1) { puts("error parsing option -G (required float)"); return 1; }
                     effectgain = clampf(effectgain, 0, 1);
                     break;
 
@@ -152,27 +152,27 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 */
 
                 case 256:
-                    if (sscanf(optarg, "%f", &floatopts[0].value) < 1) { puts("error parsing option --delay"); return 1; }
+                    if (sscanf(optarg, "%f", &floatopts[0].value) < 1) { puts("error parsing option --delay (required float)"); return 1; }
                     floatopts[0].has = true;
                     break;
 
                 case 257:
-                    if (sscanf(optarg, "%f", &floatopts[1].value) < 1) { puts("error parsing option --depth"); return 1; }
+                    if (sscanf(optarg, "%f", &floatopts[1].value) < 1) { puts("error parsing option --depth (required float)"); return 1; }
                     floatopts[1].has = true;
                     break;
 
                 case 258:
-                    if (sscanf(optarg, "%f", &floatopts[2].value) < 1) { puts("error parsing option --feedback"); return 1; }
+                    if (sscanf(optarg, "%f", &floatopts[2].value) < 1) { puts("error parsing option --feedback (required float)"); return 1; }
                     floatopts[2].has = true;
                     break;
                 
                 case 259:
-                    if (sscanf(optarg, "%f", &floatopts[3].value) < 1) { puts("error parsing option --rate"); return 1; }
+                    if (sscanf(optarg, "%f", &floatopts[3].value) < 1) { puts("error parsing option --rate (required float)"); return 1; }
                     floatopts[3].has = true;
                     break;
 
                 case 260:
-                    if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase"); return 1; }
+                    if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase (required integer)"); return 1; }
                     intopts[0].has = true;
                     break;
 
