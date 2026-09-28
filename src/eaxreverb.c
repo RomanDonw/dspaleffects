@@ -68,14 +68,14 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
 
 #define PARSELONGFLOATOPT(optid, optindex, optname) \
     case optid:\
-        if (sscanf(optarg, "%f", &floatopts[optindex].value) < 1) { puts("error parsing option " optname " (required float)"); return 1; }\
+        if (sscanf(optarg, "%f", &floatopts[optindex].value) < 1) { puts("error parsing option --" optname " (required float)"); return 1; }\
         floatopts[optindex].has = true;\
         break;
 
 #define PARSELONGVEC3OPT(optid, optindex, optname) \
     case optid:\
         if (sscanf(optarg, "%f,%f,%f", &vec3opts[optindex].value[0], &vec3opts[optindex].value[1], &vec3opts[optindex].value[2]) < 3)\
-        { puts("error parsing option " optname " (required 3D vector - \"float, float, float\")"); return 1; }\
+        { puts("error parsing option --" optname " (required 3D vector - \"float, float, float\")"); return 1; }\
         vec3opts[optindex].has = true;\
         break;
 
@@ -88,7 +88,7 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
             intopts[optindex].value = false;\
         else\
         {\
-            puts("error parsing option " optname " (required boolean, allowed values: integer (where 0 - disable, other - enable), "\
+            puts("error parsing option --" optname " (required boolean, allowed values: integer (where 0 - disable, other - enable), "\
                 "\"true\"/\"on\"/\"enable\"/\"yes\" or \"false\"/\"off\"/\"disable\"/no\")");\
             return 1;\
         }\
@@ -140,17 +140,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             
             { .name = "reflectionsPan", .has_arg = required_argument, .val = 277, .flag = NULL },
             { .name = "lateReverbPan", .has_arg = required_argument, .val = 278, .flag = NULL },
+            {0}
         };
         while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", longopts, NULL)) != -1)
         {
             switch (p)
             {
-                /*
-                    ===========================
-                    ====== SHORT OPTIONS ======
-                    ===========================
-                */
-
                 case 'a':
                     if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
                     break;
@@ -216,37 +211,31 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     strongconfoptcheck = false;
                     break;
 
-                /*
-                    ==========================
-                    ====== LONG OPTIONS ======
-                    ===========================
-                */
+                PARSELONGFLOATOPT(256, 0, "density")
+                PARSELONGFLOATOPT(257, 1, "diffusion")
+                PARSELONGFLOATOPT(258, 2, "gain")
+                PARSELONGFLOATOPT(259, 3, "gainHF")
+                PARSELONGFLOATOPT(260, 4, "gainLF")
+                PARSELONGFLOATOPT(261, 5, "decayTime")
+                PARSELONGFLOATOPT(262, 6, "decayHFRatio")
+                PARSELONGFLOATOPT(263, 7, "decayLFRatio")
+                PARSELONGFLOATOPT(264, 8, "reflectionsGain")
+                PARSELONGFLOATOPT(265, 9, "reflectionsDelay")
+                PARSELONGFLOATOPT(266, 10, "lateReverbGain")
+                PARSELONGFLOATOPT(267, 11, "lateReverbDelay")
+                PARSELONGFLOATOPT(268, 12, "echoTime")
+                PARSELONGFLOATOPT(269, 13, "echoDepth")
+                PARSELONGFLOATOPT(270, 14, "modulationTime")
+                PARSELONGFLOATOPT(271, 15, "modulationDepth")
+                PARSELONGFLOATOPT(272, 16, "airAbsorptionGainHF")
+                PARSELONGFLOATOPT(273, 17, "HFReference")
+                PARSELONGFLOATOPT(274, 18, "LFReference")
+                PARSELONGFLOATOPT(275, 19, "roomRolloffFactor")
 
-                PARSELONGFLOATOPT(256, 0, "--density")
-                PARSELONGFLOATOPT(257, 1, "--diffusion")
-                PARSELONGFLOATOPT(258, 2, "--gain")
-                PARSELONGFLOATOPT(259, 3, "--gainHF")
-                PARSELONGFLOATOPT(260, 4, "--gainLF")
-                PARSELONGFLOATOPT(261, 5, "--decayTime")
-                PARSELONGFLOATOPT(262, 6, "--decayHFRatio")
-                PARSELONGFLOATOPT(263, 7, "--decayLFRatio")
-                PARSELONGFLOATOPT(264, 8, "--reflectionsGain")
-                PARSELONGFLOATOPT(265, 9, "--reflectionsDelay")
-                PARSELONGFLOATOPT(266, 10, "--lateReverbGain")
-                PARSELONGFLOATOPT(267, 11, "--lateReverbDelay")
-                PARSELONGFLOATOPT(268, 12, "--echoTime")
-                PARSELONGFLOATOPT(269, 13, "--echoDepth")
-                PARSELONGFLOATOPT(270, 14, "--modulationTime")
-                PARSELONGFLOATOPT(271, 15, "--modulationDepth")
-                PARSELONGFLOATOPT(272, 16, "--airAbsorptionGainHF")
-                PARSELONGFLOATOPT(273, 17, "--HFReference")
-                PARSELONGFLOATOPT(274, 18, "--LFReference")
-                PARSELONGFLOATOPT(275, 19, "--roomRolloffFactor")
-
-                PARSELONGBOOLOPT(276, 0, "--decayHFLimit")
+                PARSELONGBOOLOPT(276, 0, "decayHFLimit")
                 
-                PARSELONGVEC3OPT(277, 0, "--reflectionsPan")
-                PARSELONGVEC3OPT(278, 1, "--lateReverbPan")
+                PARSELONGVEC3OPT(277, 0, "reflectionsPan")
+                PARSELONGVEC3OPT(278, 1, "lateReverbPan")
             }
         }
     }

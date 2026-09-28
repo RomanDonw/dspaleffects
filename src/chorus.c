@@ -71,18 +71,13 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             { .name = "feedback", .has_arg = required_argument, .val = 258, .flag = NULL },
             { .name = "rate", .has_arg = required_argument, .val = 259, .flag = NULL },
             { .name = "phase", .has_arg = required_argument, .val = 260, .flag = NULL },
-            { .name = "waveform", .has_arg = required_argument, .val = 261, .flag = NULL }
+            { .name = "waveform", .has_arg = required_argument, .val = 261, .flag = NULL },
+            {0}
         };
         while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", longopts, NULL)) != -1)
         {
             switch (p)
             {
-                /*
-                    ===========================
-                    ====== SHORT OPTIONS ======
-                    ===========================
-                */
-
                 case 'a':
                     if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
                     break;
@@ -148,12 +143,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     strongconfoptcheck = false;
                     break;
 
-                /*
-                    ==========================
-                    ====== LONG OPTIONS ======
-                    ===========================
-                */
-
                 PARSELONGFLOATOPT(256, 0, "delay")
                 PARSELONGFLOATOPT(257, 1, "depth")
                 PARSELONGFLOATOPT(258, 2, "feedback")
@@ -167,7 +156,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 261:
                     if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
                     else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
-                    else { printf("incorrect \"--waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
+                    else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
                     intopts[1].has = true;
                     break;
             }
