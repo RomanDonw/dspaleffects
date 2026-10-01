@@ -37,8 +37,8 @@ struct intopt { bool has; int value; } typedef intopt;
     {\
         if (json_object_object_get_ex(configroot, strname, &jobj))\
         {\
-            if (jsonutil_getfloat(jobj, vec3f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
-            alEffectf(effect, alname, *vec3f);\
+            if (jsonutil_getfloat(jobj, &f)) { puts("parsing \"" strname "\" config option failed (required float)"); return 1; }\
+            alEffectf(effect, alname, f);\
         }\
         else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
     }
@@ -165,10 +165,9 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     if (configroot)
     {
-        bool flag;
-        float vec3f[3];
         struct json_object *jobj;
-        
+        float f;
+
         GETFLTCONFOPTHELPER(0, "frequency", AL_RING_MODULATOR_FREQUENCY);
         GETFLTCONFOPTHELPER(1, "highpassCutoff", AL_RING_MODULATOR_HIGHPASS_CUTOFF);
         

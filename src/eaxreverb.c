@@ -251,9 +251,9 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     if (configroot)
     {
-        bool flag;
-        float vec3f[3];
         struct json_object *jobj;
+        float vec3f[3];
+        bool flag;
 
         GETFLTCONFOPTHELPER(0, "density", AL_EAXREVERB_DENSITY);
         GETFLTCONFOPTHELPER(1, "diffusion", AL_EAXREVERB_DIFFUSION);
