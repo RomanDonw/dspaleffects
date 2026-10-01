@@ -1,0 +1,5 @@
+{
+    "frequency": 1000,
+    "highpassCutoff": 800,
+    "waveform": "square"
+}
