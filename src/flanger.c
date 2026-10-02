@@ -154,8 +154,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     break;
 
                 case 261:
-                    if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
-                    else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
+                    if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_FLANGER_WAVEFORM_SINUSOID;
+                    else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_FLANGER_WAVEFORM_TRIANGLE;
                     else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
                     intopts[1].has = true;
                     break;
@@ -170,24 +170,24 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     ALuint effect;
     alGenEffects(1, &effect);
-    alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_CHORUS);
+    alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_FLANGER);
 
     if (configroot)
     {
         struct json_object *jobj;
         float f;
         
-        GETFLTCONFOPTHELPER(0, "delay", AL_CHORUS_DELAY);
-        GETFLTCONFOPTHELPER(1, "depth", AL_CHORUS_DEPTH);
-        GETFLTCONFOPTHELPER(2, "feedback", AL_CHORUS_FEEDBACK);
-        GETFLTCONFOPTHELPER(3, "rate", AL_CHORUS_RATE);
+        GETFLTCONFOPTHELPER(0, "delay", AL_FLANGER_DELAY);
+        GETFLTCONFOPTHELPER(1, "depth", AL_FLANGER_DEPTH);
+        GETFLTCONFOPTHELPER(2, "feedback", AL_FLANGER_FEEDBACK);
+        GETFLTCONFOPTHELPER(3, "rate", AL_FLANGER_RATE);
 
         if (!intopts[0].has)
         {
             if (json_object_object_get_ex(configroot, "phase", &jobj))
             {
                 if (json_object_get_type(jobj) != json_type_int) { puts("parsing \"phase\" config option failed (required int)"); return 1; }
-                alEffecti(effect, AL_CHORUS_PHASE, json_object_get_int(jobj));
+                alEffecti(effect, AL_FLANGER_PHASE, json_object_get_int(jobj));
             }
             else if (strongconfoptcheck) { puts("key \"phase\" doesnt found in config file"); return 1; }
         }
@@ -198,8 +198,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             {
                 if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
                 const char *waveform = json_object_get_string(jobj);
-                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
-                else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
+                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_FLANGER_WAVEFORM, AL_FLANGER_WAVEFORM_SINUSOID);
+                else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_FLANGER_WAVEFORM, AL_FLANGER_WAVEFORM_TRIANGLE);
                 else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", waveform); return 1; }
             }
             else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }
@@ -208,13 +208,13 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         json_object_put(configroot);
     }
 
-    SETEFFFLOATPROPFROMOPT(0, AL_CHORUS_DELAY);
-    SETEFFFLOATPROPFROMOPT(1, AL_CHORUS_DEPTH);
-    SETEFFFLOATPROPFROMOPT(2, AL_CHORUS_FEEDBACK);
-    SETEFFFLOATPROPFROMOPT(3, AL_CHORUS_RATE);
+    SETEFFFLOATPROPFROMOPT(0, AL_FLANGER_DELAY);
+    SETEFFFLOATPROPFROMOPT(1, AL_FLANGER_DEPTH);
+    SETEFFFLOATPROPFROMOPT(2, AL_FLANGER_FEEDBACK);
+    SETEFFFLOATPROPFROMOPT(3, AL_FLANGER_RATE);
     
-    SETEFFINTPROPFROMOPT(0, AL_CHORUS_PHASE);
-    SETEFFINTPROPFROMOPT(1, AL_CHORUS_WAVEFORM);
+    SETEFFINTPROPFROMOPT(0, AL_FLANGER_PHASE);
+    SETEFFINTPROPFROMOPT(1, AL_FLANGER_WAVEFORM);
     
     // ===============================
 
@@ -264,8 +264,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     printeffectprops(effect);
     alDeleteEffects(1, &effect);
 
-    *sysname = "chorus";
-    *dispname = "OpenAL Chorus";
+    *sysname = "flanger";
+    *dispname = "OpenAL Flanger";
     return 0;
 }
 
@@ -309,21 +309,21 @@ static void printeffectprops(ALuint effect)
     puts("effectprops:");
 
     union { float f; int i; } v;
-    alGetEffectf(effect, AL_CHORUS_DELAY, &v.f); printf("  delay: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_DEPTH, &v.f); printf("  depth: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_FEEDBACK, &v.f); printf("  feedback: %f\n", v.f);
-    alGetEffecti(effect, AL_CHORUS_PHASE, &v.i); printf("  phase: %i\n", v.i);
-    alGetEffectf(effect, AL_CHORUS_RATE, &v.f); printf("  rate: %f\n", v.f);
+    alGetEffectf(effect, AL_FLANGER_DELAY, &v.f); printf("  delay: %f\n", v.f);
+    alGetEffectf(effect, AL_FLANGER_DEPTH, &v.f); printf("  depth: %f\n", v.f);
+    alGetEffectf(effect, AL_FLANGER_FEEDBACK, &v.f); printf("  feedback: %f\n", v.f);
+    alGetEffecti(effect, AL_FLANGER_PHASE, &v.i); printf("  phase: %i\n", v.i);
+    alGetEffectf(effect, AL_FLANGER_RATE, &v.f); printf("  rate: %f\n", v.f);
 
-    alGetEffecti(effect, AL_CHORUS_WAVEFORM, &v.i);
+    alGetEffecti(effect, AL_FLANGER_WAVEFORM, &v.i);
     printf("  waveform: ");
     switch (v.i)
     {
-        case AL_CHORUS_WAVEFORM_SINUSOID:
+        case AL_FLANGER_WAVEFORM_SINUSOID:
             puts("sinusoid");
             break;
 
-        case AL_CHORUS_WAVEFORM_TRIANGLE:
+        case AL_FLANGER_WAVEFORM_TRIANGLE:
             puts("triangle");
             break;
 
