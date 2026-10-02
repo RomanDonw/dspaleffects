@@ -39,4 +39,4 @@ endmacro()
 
 defmod(dspeaxreverb "src/eaxreverb.c")
 defmod(dspchorus "src/chorus.c")
-defmod(dspringmodulator "src/ringmodulator.c")
+defmod(dspringmod "src/ringmod.c")

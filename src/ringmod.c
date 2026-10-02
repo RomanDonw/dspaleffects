@@ -241,7 +241,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     printeffectprops(effect);
     alDeleteEffects(1, &effect);
 
-    *sysname = "ringmodulator";
+    *sysname = "ringmod";
     *dispname = "OpenAL Ring Modulator";
     return 0;
 }
