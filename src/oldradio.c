@@ -135,10 +135,10 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     for (unsigned long i = 0; i < duration; i++)
     {
-        double time = (position + i) / (float)rate;
+        //double time = (position + i) / (float)rate;
         //float lfo = sin(time * 0.5) * 0.05 + sin(time * 4) * 0.1;
         float mod = ((RNDF() < 0.01 ? 0.5 : 0) + 0.15);
-        buff[i] = (RNDF() * 2 - 1) * mod * 0.3;
+        buff[i] = (RNDF() * 2 - 1) * mod * 0.1;
     }
 
     alBufferData(buffers[1], AL_FORMAT_MONO_FLOAT32, buff, duration * sizeof(float), 4000);
