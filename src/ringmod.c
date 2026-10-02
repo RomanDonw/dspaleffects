@@ -59,19 +59,16 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     const char *configfilename = NULL;
     struct json_object *configroot = NULL;
 
-    floatopt floatopts[4] = {0};
-    intopt intopts[2] = {0};
+    floatopt floatopts[2] = {0};
+    intopt intopts[1] = {0};
 
     {
         int p;
         static const struct option longopts[] =
         {
-            { .name = "delay", .has_arg = required_argument, .val = 256, .flag = NULL },
-            { .name = "depth", .has_arg = required_argument, .val = 257, .flag = NULL },
-            { .name = "feedback", .has_arg = required_argument, .val = 258, .flag = NULL },
-            { .name = "rate", .has_arg = required_argument, .val = 259, .flag = NULL },
-            { .name = "phase", .has_arg = required_argument, .val = 260, .flag = NULL },
-            { .name = "waveform", .has_arg = required_argument, .val = 261, .flag = NULL },
+            { .name = "frequency", .has_arg = required_argument, .val = 256, .flag = NULL },
+            { .name = "highpassCutoff", .has_arg = required_argument, .val = 257, .flag = NULL },
+            { .name = "waveform", .has_arg = required_argument, .val = 258, .flag = NULL },
             {0}
         };
         while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", longopts, NULL)) != -1)
@@ -143,21 +140,15 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     strongconfoptcheck = false;
                     break;
 
-                PARSELONGFLOATOPT(256, 0, "delay")
-                PARSELONGFLOATOPT(257, 1, "depth")
-                PARSELONGFLOATOPT(258, 2, "feedback")
-                PARSELONGFLOATOPT(259, 3, "rate")
+                PARSELONGFLOATOPT(256, 0, "frequency")
+                PARSELONGFLOATOPT(257, 1, "highpassCutoff")
 
-                case 260:
-                    if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase (required integer)"); return 1; }
+                case 258:
+                    if (!strcmp(optarg, "sinusoid")) intopts[0].value = AL_RING_MODULATOR_SINUSOID;
+                    else if (!strcmp(optarg, "sawtooth")) intopts[0].value = AL_RING_MODULATOR_SAWTOOTH;
+                    else if (!strcmp(optarg, "square")) intopts[0].value = AL_RING_MODULATOR_SQUARE;
+                    else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")\n", optarg); return 1; }
                     intopts[0].has = true;
-                    break;
-
-                case 261:
-                    if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
-                    else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
-                    else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
-                    intopts[1].has = true;
                     break;
             }
         }
@@ -170,37 +161,26 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     ALuint effect;
     alGenEffects(1, &effect);
-    alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_CHORUS);
+    alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_RING_MODULATOR);
 
     if (configroot)
     {
         struct json_object *jobj;
         float f;
-        
-        GETFLTCONFOPTHELPER(0, "delay", AL_CHORUS_DELAY);
-        GETFLTCONFOPTHELPER(1, "depth", AL_CHORUS_DEPTH);
-        GETFLTCONFOPTHELPER(2, "feedback", AL_CHORUS_FEEDBACK);
-        GETFLTCONFOPTHELPER(3, "rate", AL_CHORUS_RATE);
 
-        if (!intopts[0].has)
-        {
-            if (json_object_object_get_ex(configroot, "phase", &jobj))
-            {
-                if (json_object_get_type(jobj) != json_type_int) { puts("parsing \"phase\" config option failed (required int)"); return 1; }
-                alEffecti(effect, AL_CHORUS_PHASE, json_object_get_int(jobj));
-            }
-            else if (strongconfoptcheck) { puts("key \"phase\" doesnt found in config file"); return 1; }
-        }
+        GETFLTCONFOPTHELPER(0, "frequency", AL_RING_MODULATOR_FREQUENCY);
+        GETFLTCONFOPTHELPER(1, "highpassCutoff", AL_RING_MODULATOR_HIGHPASS_CUTOFF);
         
-        if (!intopts[1].has)
+        if (!intopts[0].has)
         {
             if (json_object_object_get_ex(configroot, "waveform", &jobj))
             {
                 if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
                 const char *waveform = json_object_get_string(jobj);
-                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
-                else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
-                else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", waveform); return 1; }
+                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SINUSOID);
+                else if (!strcmp(waveform, "sawtooth")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SAWTOOTH);
+                else if (!strcmp(waveform, "square")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SQUARE);
+                else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")\n", waveform); return 1; }
             }
             else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }
         }
@@ -208,13 +188,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         json_object_put(configroot);
     }
 
-    SETEFFFLOATPROPFROMOPT(0, AL_CHORUS_DELAY);
-    SETEFFFLOATPROPFROMOPT(1, AL_CHORUS_DEPTH);
-    SETEFFFLOATPROPFROMOPT(2, AL_CHORUS_FEEDBACK);
-    SETEFFFLOATPROPFROMOPT(3, AL_CHORUS_RATE);
+    SETEFFFLOATPROPFROMOPT(0, AL_RING_MODULATOR_FREQUENCY);
+    SETEFFFLOATPROPFROMOPT(1, AL_RING_MODULATOR_HIGHPASS_CUTOFF);
     
-    SETEFFINTPROPFROMOPT(0, AL_CHORUS_PHASE);
-    SETEFFINTPROPFROMOPT(1, AL_CHORUS_WAVEFORM);
+    SETEFFINTPROPFROMOPT(0, AL_RING_MODULATOR_WAVEFORM);
     
     // ===============================
 
@@ -264,8 +241,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     printeffectprops(effect);
     alDeleteEffects(1, &effect);
 
-    *sysname = "chorus";
-    *dispname = "OpenAL Chorus";
+    *sysname = "ringmod";
+    *dispname = "OpenAL Ring Modulator";
     return 0;
 }
 
@@ -309,22 +286,23 @@ static void printeffectprops(ALuint effect)
     puts("effectprops:");
 
     union { float f; int i; } v;
-    alGetEffectf(effect, AL_CHORUS_DELAY, &v.f); printf("  delay: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_DEPTH, &v.f); printf("  depth: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_FEEDBACK, &v.f); printf("  feedback: %f\n", v.f);
-    alGetEffecti(effect, AL_CHORUS_PHASE, &v.i); printf("  phase: %i\n", v.i);
-    alGetEffectf(effect, AL_CHORUS_RATE, &v.f); printf("  rate: %f\n", v.f);
+    alGetEffectf(effect, AL_RING_MODULATOR_FREQUENCY, &v.f); printf("  frequency: %f\n", v.f);
+    alGetEffectf(effect, AL_RING_MODULATOR_HIGHPASS_CUTOFF, &v.f); printf("  highpassCutoff: %f\n", v.f);
 
-    alGetEffecti(effect, AL_CHORUS_WAVEFORM, &v.i);
+    alGetEffecti(effect, AL_RING_MODULATOR_WAVEFORM, &v.i);
     printf("  waveform: ");
     switch (v.i)
     {
-        case AL_CHORUS_WAVEFORM_SINUSOID:
+        case AL_RING_MODULATOR_SINUSOID:
             puts("sinusoid");
             break;
 
-        case AL_CHORUS_WAVEFORM_TRIANGLE:
-            puts("triangle");
+        case AL_RING_MODULATOR_SAWTOOTH:
+            puts("sawtooth");
+            break;
+
+        case AL_RING_MODULATOR_SQUARE:
+            puts("square");
             break;
 
         default:

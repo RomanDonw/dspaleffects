@@ -1,0 +1,5 @@
+{
+    "frequency": 10,
+    "highpassCutoff": 800,
+    "waveform": "sinusoid"
+}

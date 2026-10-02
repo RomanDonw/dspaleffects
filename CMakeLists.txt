@@ -40,5 +40,7 @@ endmacro()
 
 defmod(dspeaxreverb "src/eaxreverb.c")
 defmod(dspchorus "src/chorus.c")
+defmod(dspringmod "src/ringmod.c")
+defmod(dspflanger "src/flanger.c")
 defmod(dspoldradio "src/oldradio.c")
 target_link_libraries(dspoldradio PUBLIC SampleRate::samplerate)
