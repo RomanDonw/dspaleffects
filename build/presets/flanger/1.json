@@ -1,0 +1,8 @@
+{
+    "delay": 0.008,
+    "depth": 0.1,
+    "feedback": 0.2,
+    "phase": 90,
+    "rate": 10,
+    "waveform": "triangle"
+}
