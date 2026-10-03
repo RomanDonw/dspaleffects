@@ -1,0 +1,16 @@
+/*
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*/
+
+#ifndef BASE_H
+#define BASE_H
+
+#include <getopt.h>
+
+extern const struct longopts[];
+extern void printeffectprops(ALuint effect);
+
+
+#endif
