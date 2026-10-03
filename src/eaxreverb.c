@@ -281,6 +281,20 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
         json_object_put(configroot);
     }
+
+    // ===============================
+
+    if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
+    { puts("error adding port for input left channel"); return 1; }
+    if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
+    { puts("error adding port for input right channel"); return 1; }
+    
+    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding port for output left channel"); return 1; }
+    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding port for output right channel"); return 1; }
+
+    // ===============================
     
     SETEFFFLOATPROPFROMOPT(0, AL_EAXREVERB_DENSITY);
     SETEFFFLOATPROPFROMOPT(1, AL_EAXREVERB_DIFFUSION);
@@ -307,18 +321,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     SETEFFVEC3PROPFROMOPT(0, AL_EAXREVERB_REFLECTIONS_PAN);
     SETEFFVEC3PROPFROMOPT(1, AL_EAXREVERB_LATE_REVERB_PAN);
-
-    // ===============================
-
-    if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input left channel"); return 1; }
-    if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input right channel"); return 1; }
-    
-    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output left channel"); return 1; }
-    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output right channel"); return 1; }
     
     // ===============================
 
