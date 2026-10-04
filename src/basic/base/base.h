@@ -9,8 +9,14 @@
 
 #include <getopt.h>
 
-extern const struct longopts[];
-extern void printeffectprops(ALuint effect);
+#include "alutil/general.h"
+#include "alutil/EFX.h"
+#include "jsonutil/jsonutil.h"
 
+extern const struct option effect_longopts[];
+
+extern unsigned short effect_optcallback(int paramid);
+extern unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint *effect, const char **sysname, const char **dispname);
+extern void effect_printprops(ALuint effect);
 
 #endif
