@@ -13,8 +13,6 @@
 #include "alutil/EFX.h"
 
 #include <json-c/json_object.h>
-#include <json-c/json_tokener.h>
-#include "jsonutil/jsonutil.h"
 
 extern const struct option effect_longopts[];
 

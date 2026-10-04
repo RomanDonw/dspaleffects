@@ -6,19 +6,10 @@
 
 #include "base/base.h"
 
-#include <getopt.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-
-#include <json-c/json_object.h>
-#include <json-c/json_tokener.h>
-
-#include "alutil/general.h"
-#include "alutil/EFX.h"
-#include "jsonutil/jsonutil.h"
 
 const struct option effect_longopts[] =
 {

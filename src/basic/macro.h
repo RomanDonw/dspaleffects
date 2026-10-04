@@ -9,6 +9,8 @@
 #endif
 #define MACRO_H
 
+#include "jsonutil/jsonutil.h"
+
 struct floatopt { bool has; float value; } typedef floatopt;
 struct intopt { bool has; int value; } typedef intopt;
 struct vec3opt { bool has; float value[3]; } typedef vec3opt;
