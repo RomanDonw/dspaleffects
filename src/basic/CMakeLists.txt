@@ -11,7 +11,7 @@ macro(defmod target source)
     target_defsym(${target} PRIVATE "dspmodule_cleanup" "alutil_quit")
 endmacro()
 
-#defmod(dspeaxreverb "src/eaxreverb.c")
+defmod(dspeaxreverb "eaxreverb.c")
 defmod(dspchorus "chorus.c")
 #defmod(dspringmod "src/ringmod.c")
 #defmod(dspflanger "src/flanger.c")
