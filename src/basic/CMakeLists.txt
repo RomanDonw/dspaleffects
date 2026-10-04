@@ -1,13 +1,14 @@
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "base/*.h" "base/*.c")
 add_library(effectbase OBJECT ${SOURCES})
-target_link_libraries(effectbase PUBLIC alutil jsonutil)
 unset(SOURCES)
+target_link_libraries(effectbase PUBLIC alutil jsonutil)
+set_target_properties(effectbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 macro(defmod target source)
     add_library(${target} SHARED ${source})
     set_target_properties(${target} PROPERTIES PREFIX "")
-    target_link_libraries(${target} PRIVATE effectbase)
-    target_defsym(${target} "dspmodule_cleanup" "alutil_quit")
+    target_link_libraries(${target} PRIVATE effectbase alutil)
+    target_defsym(${target} PRIVATE "dspmodule_cleanup" "alutil_quit")
 endmacro()
 
 #defmod(dspeaxreverb "src/eaxreverb.c")

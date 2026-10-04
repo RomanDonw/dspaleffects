@@ -5,8 +5,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-macro(target_defsym target name value)
-    target_link_options(${target} PRIVATE "-Wl,--defsym=${name}=${value}")
+macro(target_defsym target level name value)
+    target_link_options(${target} ${level} "-Wl,--defsym=${name}=${value}")
 endmacro()
 
 find_package(json-c CONFIG REQUIRED)

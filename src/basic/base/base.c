@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <json-c/json_object.h>
-#include <json-c/json_tokener.h>
-
 const unsigned short dspmodule_requiredAPIversion = 1;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
@@ -24,7 +21,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         int p;
         while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", effect_longopts, NULL)) != -1)
         {
-            if (p > 255) if (ret = effect_optcallback(p)) return ret;
+            if (p > 255 || !p) if (ret = effect_optcallback(p)) return ret;
             else switch (p)
             {
                 case 'a':
@@ -91,25 +88,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 's':
                     strongconfoptcheck = false;
                     break;
-
-                /*
-                PARSELONGFLOATOPT(256, 0, "delay")
-                PARSELONGFLOATOPT(257, 1, "depth")
-                PARSELONGFLOATOPT(258, 2, "feedback")
-                PARSELONGFLOATOPT(259, 3, "rate")
-
-                case 260:
-                    if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase (required integer)"); return 1; }
-                    intopts[0].has = true;
-                    break;
-
-                case 261:
-                    if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
-                    else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
-                    else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
-                    intopts[1].has = true;
-                    break;
-                */
             }
         }
     }
@@ -120,7 +98,9 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     // ===============================
 
     ALuint effect;
-    if (ret = effect_poststartup(configroot, strongconfoptcheck, &effect, sysname, dispname)) return ret;
+    alGenEffects(1, &effect);
+    if (ret = effect_poststartup(configroot, strongconfoptcheck, effect, sysname, dispname)) return ret;
+    if (configroot) json_object_put(configroot);
 
     // ===============================
 
