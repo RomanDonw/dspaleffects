@@ -95,7 +95,9 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     
     SETEFFINTPROPFROMOPT(0, AL_CHORUS_PHASE);
     SETEFFINTPROPFROMOPT(1, AL_CHORUS_WAVEFORM);
-    
+
+    *sysname = "chorus";
+    *dispname = "OpenAL Chorus";
     return 0;
 }
 
