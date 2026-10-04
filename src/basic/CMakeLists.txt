@@ -13,5 +13,5 @@ endmacro()
 
 defmod(dspeaxreverb "eaxreverb.c")
 defmod(dspchorus "chorus.c")
-#defmod(dspringmod "src/ringmod.c")
+defmod(dspringmod "ringmod.c")
 #defmod(dspflanger "src/flanger.c")
