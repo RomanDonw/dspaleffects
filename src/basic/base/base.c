@@ -29,7 +29,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         int p;
         while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", effect_longopts, NULL)) != -1)
         {
-            if (p > 255 || !p) if (ret = effect_optcallback(p)) return ret;
+            if (p > 255 || !p) { if (ret = effect_optcallback(p)) return ret; }
             else switch (p)
             {
                 case 'a':
@@ -177,7 +177,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     size_t buffsize = (duration + 1) * sizeof(float) * 2;
     float buff[buffsize];
     for (size_t i = 0; i < ((size_t)duration) << 1; i++)
-    { buff[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
+    { buff[i] = adjf(i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0), inampmod) * involmod; }
     alBufferData(buffer, AL_FORMAT_STEREO_FLOAT32, buff, buffsize, rate);
 
     alSourcei(source, AL_BUFFER, buffer);
@@ -188,8 +188,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     if (alutil_render(buff, duration, rate)) return 1;
     if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
     {
-        if (outleft) outleft[i] = buff[i * 2];
-        if (outright) outright[i] = buff[i * 2 + 1];
+        if (outleft) outleft[i] = adjf(buff[i * 2], outampmod) * outvolmod;
+        if (outright) outright[i] = adjf(buff[i * 2 + 1], outampmod) * outvolmod;
     }
 
     return 0;
