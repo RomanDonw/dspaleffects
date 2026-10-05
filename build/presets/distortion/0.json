@@ -1,0 +1,7 @@
+{
+    "edge": 0.2,
+    "gain": 0.05,
+    "lowpassCutoff": 8000,
+    "eqCenter": 3600,
+    "eqBandwidth": 3600
+}
