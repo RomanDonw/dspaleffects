@@ -32,4 +32,21 @@ set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # ========================
 
-add_subdirectory("src/basic/")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/basic/base/*.h" "src/basic/base/*.c")
+add_library(effectbase OBJECT ${SOURCES})
+unset(SOURCES)
+target_link_libraries(effectbase PUBLIC alutil jsonutil)
+set_target_properties(effectbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+macro(defmod target source)
+    add_library(${target} SHARED "src/basic/${source}")
+    set_target_properties(${target} PROPERTIES PREFIX "")
+    target_link_libraries(${target} PRIVATE effectbase alutil jsonutil)
+    target_defsym(${target} PRIVATE "dspmodule_cleanup" "alutil_quit")
+endmacro()
+
+defmod(dspeaxreverb "eaxreverb.c")
+defmod(dspchorus "chorus.c")
+defmod(dspringmod "ringmod.c")
+defmod(dspflanger "flanger.c")
+defmod(dspdistortion "distortion.c")
