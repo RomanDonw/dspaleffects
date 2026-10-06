@@ -5,7 +5,7 @@
 */
 
 #ifdef MACRO_H
-    #error macro.h can be included only single time
+    #error macro.h can be included only one time
 #endif
 #define MACRO_H
 
