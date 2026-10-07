@@ -28,7 +28,36 @@ static ALuint sources[2], buffers[2];
 static bool allowidlerenders = false;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
-{   
+{
+    {
+        int p;
+        while ((p = getopt(argc, argv, "a:A:v:V:i")) != -1)
+        {
+            switch (p)
+            {
+                case 'a':
+                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
+                    break;
+
+                case 'A':
+                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A (required float)"); return 1; }
+                    break;
+
+                case 'v':
+                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v (required float)"); return 1; }
+                    break;
+
+                case 'V':
+                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V (required float)"); return 1; }
+                    break;
+
+                case 'i':
+                    allowidlerenders = true;
+                    break;
+            }
+        }
+    }
+
     if (alutil_init(48000, true, false)) return 1;
     if (!alIsExtensionPresent("AL_SOFT_effect_target"))
     { puts("required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return 1; }
@@ -82,21 +111,23 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);
     alEffectf(effect, AL_EQUALIZER_LOW_CUTOFF, 300);
-    alEffectf(effect, AL_EQUALIZER_LOW_GAIN, 0.03);
+    alEffectf(effect, AL_EQUALIZER_LOW_GAIN, 0);
     alEffectf(effect, AL_EQUALIZER_HIGH_CUTOFF, 3000);
-    alEffectf(effect, AL_EQUALIZER_HIGH_GAIN, 0.03);
-    alEffectf(effect, AL_EQUALIZER_MID1_WIDTH, 2);
+    alEffectf(effect, AL_EQUALIZER_HIGH_GAIN, 0);
+    alEffectf(effect, AL_EQUALIZER_MID1_WIDTH, 0);
 
     alAuxiliaryEffectSloti(slots[1], AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
 
     alSource3i(sources[0], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
     alSource3i(sources[1], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
+
+    alSourcef(sources[1], AL_GAIN, 0.1);
     
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
-        inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
+    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
+        inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
 
     *sysname = "oldradio";
     *dispname = "OpenAL Old Radio";
@@ -119,11 +150,11 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     alSourceRewind(sources[0]);
     alSourcei(sources[0], AL_BUFFER, 0);
 
-    size_t buffsize = (duration + 1) * sizeof(float) * 2;
+    size_t buffsize = (duration + 1) * sizeof(float);
     float buff[buffsize];
-    for (size_t i = 0; i < ((size_t)duration) << 1; i++)
-    { buff[i] = i & 1 ? (inright ? inright[i >> 1] : 0) : (inleft ? inleft[i >> 1] : 0); }
-    alBufferData(buffers[0], AL_FORMAT_STEREO_FLOAT32, buff, buffsize, rate);
+    for (unsigned long i = 0; i < duration; i++)
+    { buff[i] = adjf(((inleft ? inleft[i] : 0) + (inright ? inright[i] : 0)) * 0.5, inampmod) * involmod; }
+    alBufferData(buffers[0], AL_FORMAT_MONO_FLOAT32, buff, buffsize, rate);
 
     alSourcei(sources[0], AL_BUFFER, buffers[0]);
     alSourcePlay(sources[0]);
@@ -135,13 +166,14 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     for (unsigned long i = 0; i < duration; i++)
     {
-        //double time = (position + i) / (float)rate;
+        double time = (position + i) / (float)rate;
         //float lfo = sin(time * 0.5) * 0.05 + sin(time * 4) * 0.1;
-        float mod = ((RNDF() < 0.01 ? 0.5 : 0) + 0.15);
-        buff[i] = (RNDF() * 2 - 1) * mod * 0.1;
+        
+        float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
+        buff[i] = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();// + sin(time * 650) * 0.07 * RNDF() + sin(time * 233) * 0.2 * RNDF();
     }
 
-    alBufferData(buffers[1], AL_FORMAT_MONO_FLOAT32, buff, duration * sizeof(float), 4000);
+    alBufferData(buffers[1], AL_FORMAT_MONO_FLOAT32, buff, duration * sizeof(float), rate);
     alSourcei(sources[1], AL_BUFFER, buffers[1]);
     alSourcePlay(sources[1]);
 
@@ -150,8 +182,8 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     if (alutil_render(buff, duration, rate)) return 1;
     if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
     {
-        if (outleft) outleft[i] = buff[i * 2];
-        if (outright) outright[i] = buff[i * 2 + 1];
+        if (outleft) outleft[i] = adjf(buff[i * 2], outampmod) * outvolmod;
+        if (outright) outright[i] = adjf(buff[i * 2 + 1], outampmod) * outvolmod;
     }
 
     return 0;
