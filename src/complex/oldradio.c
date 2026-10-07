@@ -111,10 +111,18 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);
     alEffectf(effect, AL_EQUALIZER_LOW_CUTOFF, 300);
-    alEffectf(effect, AL_EQUALIZER_LOW_GAIN, 0);
-    alEffectf(effect, AL_EQUALIZER_HIGH_CUTOFF, 3000);
-    alEffectf(effect, AL_EQUALIZER_HIGH_GAIN, 0);
-    alEffectf(effect, AL_EQUALIZER_MID1_WIDTH, 0);
+    alEffectf(effect, AL_EQUALIZER_LOW_GAIN, AL_EQUALIZER_MIN_LOW_GAIN);
+    
+    alEffectf(effect, AL_EQUALIZER_MID1_CENTER, 1650);
+    alEffectf(effect, AL_EQUALIZER_MID1_GAIN, 5);
+    alEffectf(effect, AL_EQUALIZER_MID1_WIDTH, 1);
+    
+    alEffectf(effect, AL_EQUALIZER_MID2_CENTER, 3000);
+    alEffectf(effect, AL_EQUALIZER_MID2_GAIN, AL_EQUALIZER_MIN_MID2_GAIN);
+    alEffectf(effect, AL_EQUALIZER_MID2_WIDTH, 0.5);
+    
+    alEffectf(effect, AL_EQUALIZER_HIGH_CUTOFF, 4000);
+    alEffectf(effect, AL_EQUALIZER_HIGH_GAIN, AL_EQUALIZER_MIN_HIGH_GAIN);
 
     alAuxiliaryEffectSloti(slots[1], AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
@@ -122,7 +130,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alSource3i(sources[0], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
     alSource3i(sources[1], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
 
-    alSourcef(sources[1], AL_GAIN, 0.1);
+    alSourcef(sources[1], AL_GAIN, 0.05);
     
     // ===============================
 
@@ -135,6 +143,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 }
 
 #define RNDF() (rand() / (float)RAND_MAX)
+#define PI 3.14159265358979323846
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
@@ -170,7 +179,28 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         //float lfo = sin(time * 0.5) * 0.05 + sin(time * 4) * 0.1;
         
         float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
-        buff[i] = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();// + sin(time * 650) * 0.07 * RNDF() + sin(time * 233) * 0.2 * RNDF();
+        float v = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();// + sin(time * 650) * 0.07 * RNDF() + sin(time * 233) * 0.2 * RNDF();
+        
+        static double sqstarttime = -1;
+        static double sqendtime = -1;
+        if (sqendtime < 0) sqendtime = time;
+        
+        static double nextoffset = 7;
+        if (time - sqendtime > nextoffset)
+        {
+            sqstarttime = time;
+            sqendtime = time + RNDF() * 0.04 + 0.01;
+            nextoffset = 1 + RNDF() * 2;
+        }
+
+        float sqamp = 0;
+        if (sqendtime >= time)
+        {
+            double factor = time - sqstarttime / (sqendtime - sqstarttime);
+            sqamp = sin(factor * PI) * 3;
+        }
+
+        buff[i] = clampf(v + v * sqamp, -1, 1);
     }
 
     alBufferData(buffers[1], AL_FORMAT_MONO_FLOAT32, buff, duration * sizeof(float), rate);
