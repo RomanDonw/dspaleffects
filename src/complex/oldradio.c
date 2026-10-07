@@ -25,13 +25,13 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint sources[2], buffers[2];
-static bool allowidlerenders = false;
+static bool allowidlerenders = false, enablesquelch = true;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
     {
         int p;
-        while ((p = getopt(argc, argv, "a:A:v:V:i")) != -1)
+        while ((p = getopt(argc, argv, "a:A:v:V:il")) != -1)
         {
             switch (p)
             {
@@ -53,6 +53,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
                 case 'i':
                     allowidlerenders = true;
+                    break;
+
+                case 'l':
+                    enablesquelch = false;
                     break;
             }
         }
@@ -134,8 +138,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
-        inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
+    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\nenablesquelch: %s\n",
+        inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", enablesquelch ? "true" : "false");
 
     *sysname = "oldradio";
     *dispname = "OpenAL Old Radio";
@@ -180,24 +184,28 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
         float v = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();
         
-        static double sqstarttime = -1;
-        static double sqendtime = -1; if (sqendtime < 0) sqendtime = time;
-        static double sqnextoffset = -1; if (sqnextoffset < 0) sqnextoffset = 1 + RNDF() * 2;
-        if (time - sqendtime > sqnextoffset)
+        if (enablesquelch)
         {
-            sqstarttime = time;
-            sqendtime = time + RNDF() * 0.1 + 0.01;
-            sqnextoffset = 1 + RNDF() * 2;
-        }
+            static double sqstarttime = -1;
+            static double sqendtime = -1; if (sqendtime < 0) sqendtime = time;
+            static double sqnextoffset = -1; if (sqnextoffset < 0) sqnextoffset = 1 + RNDF() * 2;
+            if (time - sqendtime > sqnextoffset)
+            {
+                sqstarttime = time;
+                sqendtime = time + RNDF() * 0.1 + 0.01;
+                sqnextoffset = 1 + RNDF() * 2;
+            }
 
-        float sqamp = 0;
-        if (sqendtime >= time && sqstarttime >= 0)
-        {
-            double factor = (time - sqstarttime) / (sqendtime - sqstarttime);
-            sqamp = sin(factor * PI) * 3;
-        }
+            float sqamp = 0;
+            if (sqendtime >= time && sqstarttime >= 0)
+            {
+                double factor = (time - sqstarttime) / (sqendtime - sqstarttime);
+                sqamp = sin(factor * PI) * 3;
+            }
 
-        buff[i] = clampf(v + v * sqamp, -1, 1);
+            buff[i] = clampf(v + v * sqamp, -1, 1);
+        }
+        else buff[i] = v;
     }
 
     alBufferData(buffers[1], AL_FORMAT_MONO_FLOAT32, buff, duration * sizeof(float), rate);
