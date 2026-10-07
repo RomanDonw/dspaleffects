@@ -88,7 +88,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alSourcei(sources[1], AL_SOURCE_RELATIVE, AL_TRUE);
     alSourcei(sources[1], AL_ROLLOFF_FACTOR, 0);
 
-    alSourcef(sources[0], AL_GAIN, 0.1);
+    alSourcef(sources[0], AL_GAIN, 1);
+    alSourcef(sources[1], AL_GAIN, 0.1);
 
     ALuint filter;
     alGenFilters(1, &filter);
@@ -108,8 +109,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alGenEffects(1, &effect);
 
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_DISTORTION);
-    alEffectf(effect, AL_DISTORTION_EDGE, 0.2);
-    alEffectf(effect, AL_DISTORTION_GAIN, 1);
+    alEffectf(effect, AL_DISTORTION_EDGE, 0.3);
+    alEffectf(effect, AL_DISTORTION_GAIN, 0.6);
     alAuxiliaryEffectSloti(slots[0], AL_EFFECTSLOT_EFFECT, effect);
     alAuxiliaryEffectSloti(slots[0], AL_EFFECTSLOT_TARGET_SOFT, slots[1]);
 
@@ -118,7 +119,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alEffectf(effect, AL_EQUALIZER_LOW_GAIN, AL_EQUALIZER_MIN_LOW_GAIN);
     
     alEffectf(effect, AL_EQUALIZER_MID1_CENTER, 1650);
-    alEffectf(effect, AL_EQUALIZER_MID1_GAIN, 5);
+    alEffectf(effect, AL_EQUALIZER_MID1_GAIN, 1);
     alEffectf(effect, AL_EQUALIZER_MID1_WIDTH, 1);
     
     alEffectf(effect, AL_EQUALIZER_MID2_CENTER, 3000);
@@ -133,8 +134,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     alSource3i(sources[0], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
     alSource3i(sources[1], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
-
-    alSourcef(sources[1], AL_GAIN, 0.05);
     
     // ===============================
 
@@ -182,7 +181,10 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         double time = (position + i) / (double)rate;
         
         float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
-        float v = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();
+        float v = (RNDF() * 2 - 1) * mod * 0.1 +
+            sin(time * 220 * 2 * PI) * 0.1 * RNDF() +
+            sin(time * 440 * 2 * PI) * 0.1 * RNDF() +
+            sin(time * 50 * 2 * PI) * 0.1 * RNDF();
         
         if (enablesquelch)
         {
@@ -203,7 +205,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
                 sqamp = sin(factor * PI) * 3;
             }
 
-            buff[i] = clampf(v + v * sqamp, -1, 1);
+            buff[i] = clampf(v + v * sqamp * 0.5, -1, 1);
         }
         else buff[i] = v;
     }
