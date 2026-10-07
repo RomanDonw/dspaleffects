@@ -183,7 +183,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
         float v = (RNDF() * 2 - 1) * mod * 0.1 +
             sin(time * 220 * 2 * PI) * 0.1 * RNDF() +
-            sin(time * 440 * 2 * PI) * 0.1 * RNDF() +
+            //sin(time * 440 * 2 * PI) * 0.1 * RNDF() +
             sin(time * 50 * 2 * PI) * 0.1 * RNDF();
         
         if (enablesquelch)
