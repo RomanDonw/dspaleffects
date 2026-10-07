@@ -176,27 +176,26 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     for (unsigned long i = 0; i < duration; i++)
     {
         double time = (position + i) / (float)rate;
-        //float lfo = sin(time * 0.5) * 0.05 + sin(time * 4) * 0.1;
         
         float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
-        float v = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();// + sin(time * 650) * 0.07 * RNDF() + sin(time * 233) * 0.2 * RNDF();
+        float v = (RNDF() * 2 - 1) * mod * 0.1 + sin(time * 400) * 0.1 * RNDF();
         
         static double sqstarttime = -1;
         static double sqendtime = -1;
         if (sqendtime < 0) sqendtime = time;
         
-        static double nextoffset = 7;
+        static double nextoffset = 0;
         if (time - sqendtime > nextoffset)
         {
             sqstarttime = time;
-            sqendtime = time + RNDF() * 0.04 + 0.01;
+            sqendtime = time + RNDF() * 0.1 + 0.01;
             nextoffset = 1 + RNDF() * 2;
         }
 
         float sqamp = 0;
         if (sqendtime >= time)
         {
-            double factor = time - sqstarttime / (sqendtime - sqstarttime);
+            double factor = (time - sqstarttime) / (sqendtime - sqstarttime);
             sqamp = sin(factor * PI) * 3;
         }
 
