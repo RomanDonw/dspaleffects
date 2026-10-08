@@ -181,10 +181,11 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     {
         double time = (position + i) / (double)rate;
         
-        float mod = ((RNDF() < 0.01 ? 2 : 0) + 0.15);
-        float v = (RNDF() * 2 - 1) * mod * 0.1 +
-            sin(time * 220 * 2 * PI) * 0.1 * RNDF() +
-            sin(time * 50 * 2 * PI) * 0.1 * RNDF();
+        float v = (
+            (RNDF() * 2 - 1) * ((RNDF() < 0.01 ? 2 : 0) + 0.15) +
+            sin(time * 220 * 2 * PI) * RNDF() +
+            sin(time * 50 * 2 * PI) * RNDF()
+        ) * 0.1;
         
         if (enablesquelch)
         {
@@ -202,11 +203,11 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
             if (sqendtime >= time && sqstarttime >= 0)
             {
                 double factor = (time - sqstarttime) / (sqendtime - sqstarttime);
-                sqamp = pow(sin(factor * PI), 20) * 3;
+                sqamp = pow(sin(factor * PI), 20) * 1.5;
             }
             else sqamp = 0;
 
-            buff[i] = clampf(v + v * sqamp * 0.5, -1, 1);
+            buff[i] = clampf(v + v * sqamp, -1, 1);
         }
         else buff[i] = v;
     }
