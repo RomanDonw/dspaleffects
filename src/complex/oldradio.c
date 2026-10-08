@@ -62,7 +62,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         }
     }
 
-    if (alutil_init(48000, true, false)) return 1;
+    if (alutil_init(48000, true, false, ALC_STEREO_SOFT)) return 1;
     if (!alIsExtensionPresent("AL_SOFT_effect_target"))
     { puts("required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return 1; }
     if (alutil_loadEFX()) return 1;

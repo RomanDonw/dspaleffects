@@ -9,10 +9,12 @@
 
 #include <stdbool.h>
 #include <al.h>
+#include <alc.h>
+#include <alext.h>
 
 // all these functions returns 0 on success.
 
-char alutil_init(unsigned long firstrate, bool errorlog, bool limitoutput);
+char alutil_init(unsigned long firstrate, bool errorlog, bool limitoutput, ALCint channels);
 char alutil_render(float interleaved[], unsigned long duration, unsigned long rate);
 char alutil_quit(void);
 

@@ -12,9 +12,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <alc.h>
-#include <alext.h>
-
 // ===============================
 
 static ALCdevice *aldev;
@@ -26,13 +23,15 @@ static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 static bool inited = false;
 static unsigned long currrate;
 static bool enableerrorlog;
+static ALCint chconf;
 
 #define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
 
-char alutil_init(unsigned long initrate, bool errorlog, bool limitoutput)
+char alutil_init(unsigned long initrate, bool errorlog, bool limitoutput, ALCint channels)
 {
     if (inited) return 1;
     enableerrorlog = errorlog;
+    chconf = channels;
 
     // ===============================
 
@@ -55,9 +54,9 @@ char alutil_init(unsigned long initrate, bool errorlog, bool limitoutput)
     { ERRORLOG("failed loading alcResetDeviceSOFT OpenAL function"); return 1; }
     
     {
-        const ALint attrs[] =
+        const ALCint attrs[] =
         {
-            ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+            ALC_FORMAT_CHANNELS_SOFT, channels,
             ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
             ALC_FREQUENCY, initrate,
             ALC_OUTPUT_LIMITER_SOFT, limitoutput ? AL_TRUE : AL_FALSE,
@@ -82,7 +81,7 @@ char alutil_render(float interleaved[], unsigned long duration, unsigned long ra
     {
         const ALint attrs[] =
         {
-            ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
+            ALC_FORMAT_CHANNELS_SOFT, chconf,
             ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
             ALC_FREQUENCY, rate,
             ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
