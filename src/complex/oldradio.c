@@ -202,7 +202,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
             if (sqendtime >= time && sqstarttime >= 0)
             {
                 double factor = (time - sqstarttime) / (sqendtime - sqstarttime);
-                sqamp = powf(sin(factor * PI), 20) * 3;
+                sqamp = pow(sin(factor * PI), 20) * 3;
             }
             else sqamp = 0;
 
