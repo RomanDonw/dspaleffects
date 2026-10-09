@@ -24,7 +24,7 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
-static ALuint sources[2], buffers[2];
+static ALuint source, buffer;
 static bool allowidlerenders = false, enablesquelch = true;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
@@ -81,15 +81,10 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     
     // ===============================
     
-    alGenBuffers(2, buffers);
-    alGenSources(2, sources);
-    alSourcei(sources[0], AL_SOURCE_RELATIVE, AL_TRUE);
-    alSourcei(sources[0], AL_ROLLOFF_FACTOR, 0);
-    alSourcei(sources[1], AL_SOURCE_RELATIVE, AL_TRUE);
-    alSourcei(sources[1], AL_ROLLOFF_FACTOR, 0);
-
-    alSourcef(sources[0], AL_GAIN, 1);
-    alSourcef(sources[1], AL_GAIN, 0.1);
+    alGenBuffers(1, &buffer);
+    alGenSources(1, &source);
+    alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcei(source, AL_ROLLOFF_FACTOR, 0);
 
     ALuint filter;
     alGenFilters(1, &filter);
@@ -98,8 +93,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alFilterf(filter, AL_LOWPASS_MAX_GAINHF, 1);
     alFilterf(filter, AL_LOWPASS_GAIN, 0);
 
-    alSourcei(sources[0], AL_DIRECT_FILTER, filter);
-    alSourcei(sources[1], AL_DIRECT_FILTER, filter);
+    alSourcei(source, AL_DIRECT_FILTER, filter);
     alDeleteFilters(1, &filter);
 
     // ===============================
@@ -132,8 +126,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     alAuxiliaryEffectSloti(slots[1], AL_EFFECTSLOT_EFFECT, effect);
     alDeleteEffects(1, &effect);
 
-    alSource3i(sources[0], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
-    alSource3i(sources[1], AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
+    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slots[0], 0, AL_FILTER_NULL);
     
     // ===============================
 
@@ -160,28 +153,20 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     // ===============================
     
-    alSourceRewind(sources[0]);
-    alSourcei(sources[0], AL_BUFFER, 0);
+    alSourceRewind(source);
+    alSourcei(source, AL_BUFFER, 0);
 
     size_t buffsize = (duration + 1) * sizeof(float);
     float buff[buffsize];
     for (unsigned long i = 0; i < duration; i++)
-    { buff[i] = adjf(((inleft ? inleft[i] : 0) + (inright ? inright[i] : 0)) * 0.5, inampmod) * involmod; }
-    alBufferData(buffers[0], AL_FORMAT_MONO_FLOAT32, buff, buffsize, rate);
-
-    alSourcei(sources[0], AL_BUFFER, buffers[0]);
-    alSourcePlay(sources[0]);
-
-    // ===============================
-
-    alSourceRewind(sources[1]);
-    alSourcei(sources[1], AL_BUFFER, 0);
-
-    for (unsigned long i = 0; i < duration; i++)
     {
+        float sig = adjf(((inleft ? inleft[i] : 0) + (inright ? inright[i] : 0)) * 0.5, inampmod) * involmod;
+
+        // ===============================
+
         double time = (position + i) / (double)rate;
         
-        float v = (
+        float noise = (
             (RNDF() * 2 - 1) * ((RNDF() < 0.01 ? 2 : 0) + 0.15) +
             sin(time * 220 * 2 * PI) * RNDF() +
             sin(time * 50 * 2 * PI) * RNDF()
@@ -207,14 +192,17 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
             }
             else sqamp = 0;
 
-            buff[i] = clampf(v + v * sqamp, -1, 1);
+            noise = noise + noise * sqamp;
         }
-        else buff[i] = v;
-    }
 
-    alBufferData(buffers[1], AL_FORMAT_MONO_FLOAT32, buff, duration * sizeof(float), rate);
-    alSourcei(sources[1], AL_BUFFER, buffers[1]);
-    alSourcePlay(sources[1]);
+        // ===============================
+
+        buff[i] = sig + noise * 0.1;
+    }
+    alBufferData(buffer, AL_FORMAT_MONO_FLOAT32, buff, buffsize, rate);
+
+    alSourcei(source, AL_BUFFER, buffer);
+    alSourcePlay(source);
 
     // ===============================
 
