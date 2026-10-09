@@ -22,16 +22,22 @@
 
 const unsigned short dspmodule_requiredAPIversion = 1;
 
-static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
+static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1, noisevolume = 0.1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
-static bool allowidlerenders = false, enablesquelch = true;
+static bool allowidlerenders = false, noisesquelch = true;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
     {
         int p;
-        while ((p = getopt(argc, argv, "a:A:v:V:il")) != -1)
+        static const struct option longopts[] =
+        {
+            { .name = "noiseVolume", .has_arg = required_argument, .val = 256, .flag = NULL },
+            { .name = "disableNoiseSquelch", .has_arg = no_argument, .val = 257, .flag = NULL },
+            {0}
+        };
+        while ((p = getopt_long(argc, argv, "a:A:v:V:i", longopts, NULL)) != -1)
         {
             switch (p)
             {
@@ -55,8 +61,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     allowidlerenders = true;
                     break;
 
-                case 'l':
-                    enablesquelch = false;
+                case 256:
+                    if (sscanf(optarg, "%f", &noisevolume) < 1) { puts("error parsing option --noiseVolume (required float)"); return 1; }
+                    break;
+
+                case 257:
+                    noisesquelch = false;
                     break;
             }
         }
@@ -130,8 +140,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\nenablesquelch: %s\n",
-        inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", enablesquelch ? "true" : "false");
+    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\nnoisesquelch: %s\nnoisevolume: %f\n",
+        inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", noisesquelch ? "true" : "false", noisevolume);
 
     *sysname = "oldradio";
     *dispname = "OpenAL Old Radio";
@@ -172,7 +182,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
             sin(time * 50 * 2 * PI) * RNDF()
         ) * 0.1;
         
-        if (enablesquelch)
+        if (noisesquelch)
         {
             static double sqstarttime = -1;
             static double sqendtime = -1; if (sqendtime < 0) sqendtime = time;
@@ -197,7 +207,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
         // ===============================
 
-        buff[i] = sig + noise * 0.1;
+        buff[i] = sig + noise * noisevolume;
     }
     alBufferData(buffer, AL_FORMAT_MONO_FLOAT32, buff, buffsize, rate);
 
