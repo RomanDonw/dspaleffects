@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "util/util.h"
+
 const struct option effect_longopts[] =
 {
     { .name = "frequency", .has_arg = required_argument, .val = 256, .flag = NULL },
@@ -31,9 +33,9 @@ unsigned short effect_optcallback(int optid)
         PARSELONGFLOATOPT(257, 1, "highpassCutoff")
 
         case 258:
-            if (!strcmp(optarg, "sinusoid")) intopts[0].value = AL_RING_MODULATOR_SINUSOID;
-            else if (!strcmp(optarg, "sawtooth")) intopts[0].value = AL_RING_MODULATOR_SAWTOOTH;
-            else if (!strcmp(optarg, "square")) intopts[0].value = AL_RING_MODULATOR_SQUARE;
+            if (strfcmpl(optarg, "sinusoid")) intopts[0].value = AL_RING_MODULATOR_SINUSOID;
+            else if (strfcmpl(optarg, "sawtooth")) intopts[0].value = AL_RING_MODULATOR_SAWTOOTH;
+            else if (strfcmpl(optarg, "square")) intopts[0].value = AL_RING_MODULATOR_SQUARE;
             else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")\n", optarg); return 1; }
             intopts[0].has = true;
             break;
@@ -59,9 +61,9 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
             {
                 if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
                 const char *waveform = json_object_get_string(jobj);
-                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SINUSOID);
-                else if (!strcmp(waveform, "sawtooth")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SAWTOOTH);
-                else if (!strcmp(waveform, "square")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SQUARE);
+                if (strfcmpl(waveform, "sinusoid")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SINUSOID);
+                else if (strfcmpl(waveform, "sawtooth")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SAWTOOTH);
+                else if (strfcmpl(waveform, "square")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SQUARE);
                 else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")\n", waveform); return 1; }
             }
             else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }

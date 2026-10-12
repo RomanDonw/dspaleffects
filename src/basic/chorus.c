@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "util/util.h"
+
 const struct option effect_longopts[] =
 {
     { .name = "delay", .has_arg = required_argument, .val = 256, .flag = NULL },
@@ -41,8 +43,8 @@ unsigned short effect_optcallback(int optid)
             break;
 
         case 261:
-            if (!strcmp(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
-            else if (!strcmp(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
+            if (strfcmpl(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
+            else if (strfcmpl(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
             else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
             intopts[1].has = true;
             break;
@@ -80,8 +82,8 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
             {
                 if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
                 const char *waveform = json_object_get_string(jobj);
-                if (!strcmp(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
-                else if (!strcmp(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
+                if (strfcmpl(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
+                else if (strfcmpl(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
                 else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", waveform); return 1; }
             }
             else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }
