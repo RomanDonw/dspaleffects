@@ -39,7 +39,7 @@ target_link_libraries(effectbase PUBLIC alutil jsonutil)
 set_target_properties(effectbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 macro(defmod target source)
-    add_library(${target} SHARED "src/basic/${source}")
+    add_library(${target} SHARED "src/basic/${source}" "src/basic/util.c")
     set_target_properties(${target} PROPERTIES PREFIX "")
     target_link_libraries(${target} PRIVATE effectbase alutil jsonutil)
     target_defsym(${target} PRIVATE "dspmodule_cleanup" "alutil_quit")

@@ -20,14 +20,15 @@ const struct option effect_longopts[] =
 };
 
 #include "macro.h"
+#include "util.h"
 static floatopt floatopts[1] = {0};
 static intopt intopts[2] = {0};
 
 #define PARSELONGDIROPT(optid, optindex, optname) \
     case optid:\
-        if (!strcmp(optarg, "down")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_DOWN;\
-        else if (!strcmp(optarg, "up")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_UP;\
-        else if (!strcmp(optarg, "off")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_OFF;\
+        if (strfcmpl(optarg, "down")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_DOWN;\
+        else if (strfcmpl(optarg, "up")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_UP;\
+        else if (strfcmpl(optarg, "off")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_OFF;\
         else { printf("incorrect --" optname " enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")\n", optarg); return 1; }\
         intopts[optindex].has = true;\
         break;
@@ -40,9 +41,9 @@ static intopt intopts[2] = {0};
             {\
                 if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"" strname "\" config option failed (required string)"); return 1; }\
                 const char *direction = json_object_get_string(jobj);\
-                if (!strcmp(direction, "down")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_DOWN);\
-                else if (!strcmp(direction, "up")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_UP);\
-                else if (!strcmp(direction, "off")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_OFF);\
+                if (strfcmpl(direction, "down")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_DOWN);\
+                else if (strfcmpl(direction, "up")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_UP);\
+                else if (strfcmpl(direction, "off")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_OFF);\
                 else { printf("incorrect \"" strname "\" enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")\n", direction); return 1; }\
             }\
             else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
