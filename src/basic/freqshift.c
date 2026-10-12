@@ -49,8 +49,6 @@ static intopt intopts[2] = {0};
         }\
     }
 
-#include <AL/efx.h>
-
 unsigned short effect_optcallback(int optid)
 {
     switch (optid)
