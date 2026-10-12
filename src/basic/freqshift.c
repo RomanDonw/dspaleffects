@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "util/util.h"
+
 const struct option effect_longopts[] =
 {
     { .name = "frequency", .has_arg = required_argument, .val = 256, .flag = NULL },
@@ -20,7 +22,6 @@ const struct option effect_longopts[] =
 };
 
 #include "macro.h"
-#include "util.h"
 static floatopt floatopts[1] = {0};
 static intopt intopts[2] = {0};
 
