@@ -82,8 +82,6 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
 
 void effect_printprops(ALuint effect)
 {
-    puts("effectprops:");
-
     union { float f; int i; } v;
     alGetEffectf(effect, AL_RING_MODULATOR_FREQUENCY, &v.f); printf("  frequency: %f\n", v.f);
     alGetEffectf(effect, AL_RING_MODULATOR_HIGHPASS_CUTOFF, &v.f); printf("  highpassCutoff: %f\n", v.f);

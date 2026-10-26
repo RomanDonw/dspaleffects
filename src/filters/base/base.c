@@ -98,6 +98,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nfiltergain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
         inampmod, involmod, origgain, filtergain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
 
+    puts("filterprops:");
     filter_printprops(filter);
     alDeleteFilters(1, &filter);
     return 0;

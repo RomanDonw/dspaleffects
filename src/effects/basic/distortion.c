@@ -66,8 +66,6 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
 
 void effect_printprops(ALuint effect)
 {
-    puts("effectprops:");
-
     float f;
     alGetEffectf(effect, AL_DISTORTION_EDGE, &f); printf("  edge: %f\n", f);
     alGetEffectf(effect, AL_DISTORTION_GAIN, &f); printf("  gain: %f\n", f);

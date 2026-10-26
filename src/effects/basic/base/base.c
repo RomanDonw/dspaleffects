@@ -155,6 +155,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
     configfilename ? printf("configfilename: %s\n", configfilename) : puts("config file not specified");
 
+    puts("effectprops:");
     effect_printprops(effect);
     alDeleteEffects(1, &effect);
     return 0;

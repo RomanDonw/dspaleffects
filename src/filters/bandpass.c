@@ -43,8 +43,6 @@ unsigned short filter_poststartup(ALuint filter, float filtergain, const char **
 
 void filter_printprops(ALuint filter)
 {
-    puts("filterprops:");
-
     float v;
     alGetFilterf(filter, AL_BANDPASS_GAINLF, &v); printf("  gainLF: %f\n", v);
     alGetFilterf(filter, AL_BANDPASS_GAINHF, &v); printf("  gainHF: %f\n", v);

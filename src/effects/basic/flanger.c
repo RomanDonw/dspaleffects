@@ -105,8 +105,6 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
 
 void effect_printprops(ALuint effect)
 {
-    puts("effectprops:");
-
     union { float f; int i; } v;
     alGetEffectf(effect, AL_FLANGER_DELAY, &v.f); printf("  delay: %f\n", v.f);
     alGetEffectf(effect, AL_FLANGER_DEPTH, &v.f); printf("  depth: %f\n", v.f);
