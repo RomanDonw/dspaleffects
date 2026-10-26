@@ -36,8 +36,8 @@ unsigned short filter_poststartup(ALuint filter, float filtergain, const char **
     SETFILTERFLOATPROPFROMOPT(0, AL_BANDPASS_GAINLF)
     SETFILTERFLOATPROPFROMOPT(1, AL_BANDPASS_GAINHF)
 
-    *sysname = "bandpass";
-    *dispname = "OpenAL Bandpass";
+    *sysname = "OALbandpassFilter";
+    *dispname = "OpenAL Bandpass Filter";
     return 0;
 }
 

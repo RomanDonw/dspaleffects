@@ -33,8 +33,8 @@ unsigned short filter_poststartup(ALuint filter, float filtergain, const char **
     
     SETFILTERFLOATPROPFROMOPT(0, AL_LOWPASS_GAINHF)
 
-    *sysname = "lowpass";
-    *dispname = "OpenAL Lowpass";
+    *sysname = "OALlowpassFilter";
+    *dispname = "OpenAL Lowpass Filter";
     return 0;
 }
 

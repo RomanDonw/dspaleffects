@@ -98,8 +98,8 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     SETEFFINTPROPFROMOPT(0, AL_FLANGER_PHASE);
     SETEFFINTPROPFROMOPT(1, AL_FLANGER_WAVEFORM);
 
-    *sysname = "flanger";
-    *dispname = "OpenAL Flanger";
+    *sysname = "OALflangerEffect";
+    *dispname = "OpenAL Flanger Effect";
     return 0;
 }
 

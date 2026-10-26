@@ -75,8 +75,8 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     
     SETEFFINTPROPFROMOPT(0, AL_RING_MODULATOR_WAVEFORM);
 
-    *sysname = "ringmod";
-    *dispname = "OpenAL Ring Modulator";
+    *sysname = "OALringmodEffect";
+    *dispname = "OpenAL Ring Modulator Effect";
     return 0;
 }
 

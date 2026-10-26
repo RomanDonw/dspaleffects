@@ -59,8 +59,8 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     SETEFFFLOATPROPFROMOPT(3, AL_DISTORTION_EQCENTER);
     SETEFFFLOATPROPFROMOPT(4, AL_DISTORTION_EQBANDWIDTH);
 
-    *sysname = "distortion";
-    *dispname = "OpenAL Distortion";
+    *sysname = "OALdistortionEffect";
+    *dispname = "OpenAL Distortion Effect";
     return 0;
 }
 

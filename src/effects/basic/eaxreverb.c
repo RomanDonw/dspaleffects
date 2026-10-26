@@ -141,8 +141,8 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     SETEFFVEC3PROPFROMOPT(0, AL_EAXREVERB_REFLECTIONS_PAN);
     SETEFFVEC3PROPFROMOPT(1, AL_EAXREVERB_LATE_REVERB_PAN);
 
-    *sysname = "eaxreverb";
-    *dispname = "OpenAL EAX Reverb.";
+    *sysname = "OALeaxreverbEffect";
+    *dispname = "OpenAL EAX Reverb. Effect";
     return 0;
 }
 

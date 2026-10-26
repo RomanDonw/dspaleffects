@@ -80,8 +80,8 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     SETEFFINTPROPFROMOPT(0, AL_FREQUENCY_SHIFTER_LEFT_DIRECTION);
     SETEFFINTPROPFROMOPT(1, AL_FREQUENCY_SHIFTER_RIGHT_DIRECTION);
 
-    *sysname = "freqshift";
-    *dispname = "OpenAL Frequency Shifter";
+    *sysname = "OALfreqshiftEffect";
+    *dispname = "OpenAL Frequency Shifter Effect";
     return 0;
 }
 
