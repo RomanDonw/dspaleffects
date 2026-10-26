@@ -9,6 +9,11 @@
 #endif
 #define MACRO_H
 
+#include <stdio.h>
+#include <stdbool.h>
+
+#include "alutil/EFX.h"
+
 struct floatopt { bool has; float value; } typedef floatopt;
 
 #define PARSELONGFLOATOPT(optid, optindex, optname) \

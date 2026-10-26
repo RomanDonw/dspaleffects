@@ -9,6 +9,10 @@
 #endif
 #define MACRO_H
 
+#include <stdio.h>
+#include <stdbool.h>
+
+#include "alutil/EFX.h"
 #include "util/util.h"
 #include "jsonutil/jsonutil.h"
 
