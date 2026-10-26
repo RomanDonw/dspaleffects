@@ -1,6 +1,4 @@
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/basic/base/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/basic/base/*.c")
-add_library(effectbase OBJECT ${SOURCES})
-unset(SOURCES)
+add_library(effectbase OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/basic/base/base.c")
 target_link_libraries(effectbase PUBLIC alutil jsonutil)
 set_target_properties(effectbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

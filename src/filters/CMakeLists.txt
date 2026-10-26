@@ -1,6 +1,4 @@
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/base/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/base/*.c")
-add_library(filterbase OBJECT ${SOURCES})
-unset(SOURCES)
+add_library(filterbase OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/base/base.c")
 target_link_libraries(filterbase PUBLIC alutil)
 set_target_properties(filterbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
