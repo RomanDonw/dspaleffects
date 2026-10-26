@@ -34,3 +34,5 @@ set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_CURRENT_SOURCE_DIR "src/effects/")
 include("src/effects/CMakeLists.txt")
+set(CMAKE_CURRENT_SOURCE_DIR "src/filters/")
+include("src/filters/CMakeLists.txt")
