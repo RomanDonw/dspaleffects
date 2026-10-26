@@ -25,8 +25,8 @@ const struct option effect_longopts[] =
 };
 
 #include "macro.h"
-floatopt floatopts[4] = {0};
-intopt intopts[2] = {0};
+static floatopt floatopts[4] = {0};
+static intopt intopts[2] = {0};
 
 unsigned short effect_optcallback(int optid)
 {

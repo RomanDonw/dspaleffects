@@ -15,7 +15,7 @@ const struct option filter_longopts[] =
 };
 
 #include "macro.h"
-floatopt floatopts[1] = {0};
+static floatopt floatopts[1] = {0};
 
 unsigned short filter_optcallback(int optid)
 {
