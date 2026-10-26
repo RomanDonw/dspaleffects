@@ -10,26 +10,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <json-c/json_tokener.h>
-
 const unsigned short dspmodule_requiredAPIversion = 1;
 
-static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
+static float origgain = 1, filtergain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
-static bool allowidlerenders = false, strongconfoptcheck = true;
+static bool allowidlerenders = false;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
-    struct json_object *configroot = NULL;
-    const char *configfilename = NULL;
     unsigned short ret;
 
     {
         int p;
-        while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", effect_longopts, NULL)) != -1)
+        while ((p = getopt_long(argc, argv, "g:G:a:v:A:V:i", filter_longopts, NULL)) != -1)
         {
-            if (p > 255 || !p) { if (ret = effect_optcallback(p)) return ret; }
+            if (p > 255 || !p) { if (ret = filter_optcallback(p)) return ret; }
             else switch (p)
             {
                 case 'a':
@@ -54,61 +50,25 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     break;
 
                 case 'G':
-                    if (sscanf(optarg, "%f", &effectgain) < 1) { puts("error parsing option -G (required float)"); return 1; }
-                    effectgain = clampf(effectgain, 0, 1);
+                    if (sscanf(optarg, "%f", &filtergain) < 1) { puts("error parsing option -G (required float)"); return 1; }
+                    filtergain = clampf(filtergain, 0, 1);
                     break;
-
-                case 'f':
-                {
-                    FILE *f = fopen(optarg, "r");
-                    if (!f) { puts("unable to open config file"); return 1; }
-
-                    if (fseek(f, 0, SEEK_END)) { puts("failed to seek to end of config file"); goto errorquit_afterfopen; }
-                    long size = ftell(f);
-                    if (size < 0) { puts("failed to tell size of config file"); goto errorquit_afterfopen; }
-                    if (fseek(f, 0, SEEK_SET)) { puts("failed to seek to start of config file"); goto errorquit_afterfopen; }
-
-                    char *contents = malloc(size + 1);
-                    if (!contents) { puts("memory allocation failed"); goto errorquit_afterfopen; }
-                    bool success = fread(contents, size, 1, f);
-                    fclose(f);
-                    if (!success) { puts("failed reading config file"); goto errorquit_afteralloc; }
-                    contents[size] = '\0';
-
-                    enum json_tokener_error jerr;
-                    configroot = json_tokener_parse_verbose(contents, &jerr);
-                    free(contents);
-                    if (jerr != json_tokener_success) { printf("JSON parsing error: %s\n", json_tokener_error_desc(jerr)); goto errorquit_afteralloc;  }
-
-                    configfilename = optarg;
-                    break;
-                    errorquit_afteralloc:
-                        free(contents);
-                    errorquit_afterfopen:
-                        fclose(f);
-                    return 1;
-                }
 
                 case 'i':
                     allowidlerenders = true;
-                    break;
-
-                case 's':
-                    strongconfoptcheck = false;
                     break;
             }
         }
     }
     
-    if (alutil_init(48000, true, false, ALC_STEREO_SOFT)) return 1;
+    if (alutil_init(48000, true, false, 2)) return 1;
     if (alutil_loadEFX()) return 1;
     
     // ===============================
 
-    ALuint effect;
-    alGenEffects(1, &effect);
-    if (ret = effect_poststartup(configroot, strongconfoptcheck, effect, sysname, dispname)) return ret;
-    if (configroot) json_object_put(configroot);
+    ALuint filter;
+    alGenFilters(1, &filter);
+    if (ret = filter_poststartup(filter, filtergain, sysname, dispname)) return ret;
 
     // ===============================
 
@@ -125,25 +85,9 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     // ===============================
 
     alGenSources(1, &source);
-    
     alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
     alSourcei(source, AL_ROLLOFF_FACTOR, 0);
-    
-    ALuint filter;
-    alGenFilters(1, &filter);
-    alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-    alFilterf(filter, AL_LOWPASS_GAINHF, 1);
-    alFilterf(filter, AL_LOWPASS_GAIN, origgain);
     alSourcei(source, AL_DIRECT_FILTER, filter);
-    alDeleteFilters(1, &filter);
-    
-    // ===============================
-    
-    ALuint slot;
-    alGenAuxiliaryEffectSlots(1, &slot);
-    alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, effect);
-    alAuxiliaryEffectSlotf(slot, AL_EFFECTSLOT_GAIN, effectgain);
-    alSource3i(source, AL_AUXILIARY_SEND_FILTER, slot, 0, AL_FILTER_NULL);
     
     // ===============================
 
@@ -151,12 +95,12 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
-        inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
-    configfilename ? printf("configfilename: %s\n", configfilename) : puts("config file not specified");
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nfiltergain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
+        inampmod, involmod, origgain, filtergain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
 
-    effect_printprops(effect);
-    alDeleteEffects(1, &effect);
+    puts("filterprops:");
+    filter_printprops(filter);
+    alDeleteFilters(1, &filter);
     return 0;
 }
 

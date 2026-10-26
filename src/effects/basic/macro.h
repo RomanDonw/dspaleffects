@@ -9,6 +9,11 @@
 #endif
 #define MACRO_H
 
+#include <stdio.h>
+#include <stdbool.h>
+
+#include "alutil/EFX.h"
+#include "util/util.h"
 #include "jsonutil/jsonutil.h"
 
 struct floatopt { bool has; float value; } typedef floatopt;
@@ -77,9 +82,9 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
 #define PARSELONGBOOLOPT(optid, optindex, optname) \
     case optid:\
         if (sscanf(optarg, "%i", &intopts[optindex].value) >= 1);\
-        else if (!strcmp(optarg, "true") || !strcmp(optarg, "on") || !strcmp(optarg, "enable") || !strcmp(optarg, "yes"))\
+        else if (strfcmpl(optarg, "true") || strfcmpl(optarg, "on") || strfcmpl(optarg, "enable") || strfcmpl(optarg, "yes"))\
             intopts[optindex].value = true;\
-        else if (!strcmp(optarg, "false") || !strcmp(optarg, "off") || !strcmp(optarg, "disable") || !strcmp(optarg, "no"))\
+        else if (strfcmpl(optarg, "false") || strfcmpl(optarg, "off") || strfcmpl(optarg, "disable") || strfcmpl(optarg, "no"))\
             intopts[optindex].value = false;\
         else\
         {\

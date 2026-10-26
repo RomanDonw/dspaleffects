@@ -141,15 +141,13 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     SETEFFVEC3PROPFROMOPT(0, AL_EAXREVERB_REFLECTIONS_PAN);
     SETEFFVEC3PROPFROMOPT(1, AL_EAXREVERB_LATE_REVERB_PAN);
 
-    *sysname = "eaxreverb";
-    *dispname = "OpenAL EAX Reverb.";
+    *sysname = "OALeaxreverbEffect";
+    *dispname = "OpenAL EAX Reverb. Effect";
     return 0;
 }
 
 void effect_printprops(ALuint effect)
 {
-    puts("effectprops:");
-
     union { float f3[3]; int i; } v;
     alGetEffectf(effect, AL_EAXREVERB_DENSITY, v.f3); printf("  density: %f\n", *v.f3);
     alGetEffectf(effect, AL_EAXREVERB_DIFFUSION, v.f3); printf("  diffusion: %f\n", *v.f3);

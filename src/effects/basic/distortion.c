@@ -22,7 +22,7 @@ const struct option effect_longopts[] =
 };
 
 #include "macro.h"
-floatopt floatopts[5] = {0};
+static floatopt floatopts[5] = {0};
 
 unsigned short effect_optcallback(int optid)
 {
@@ -59,15 +59,13 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     SETEFFFLOATPROPFROMOPT(3, AL_DISTORTION_EQCENTER);
     SETEFFFLOATPROPFROMOPT(4, AL_DISTORTION_EQBANDWIDTH);
 
-    *sysname = "distortion";
-    *dispname = "OpenAL Distortion";
+    *sysname = "OALdistortionEffect";
+    *dispname = "OpenAL Distortion Effect";
     return 0;
 }
 
 void effect_printprops(ALuint effect)
 {
-    puts("effectprops:");
-
     float f;
     alGetEffectf(effect, AL_DISTORTION_EDGE, &f); printf("  edge: %f\n", f);
     alGetEffectf(effect, AL_DISTORTION_GAIN, &f); printf("  gain: %f\n", f);

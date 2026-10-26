@@ -32,32 +32,7 @@ set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # ========================
 
-macro(defmod target source)
-    add_library(${target} SHARED ${source})
-    set_target_properties(${target} PROPERTIES PREFIX "")
-endmacro()
-
-defmod(dspoldradio "src/complex/oldradio.c")
-target_link_libraries(dspoldradio PRIVATE alutil)
-target_defsym(dspoldradio PRIVATE "dspmodule_cleanup" "alutil_quit")
-
-# ========================
-
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/basic/base/*.h" "src/basic/base/*.c")
-add_library(effectbase OBJECT ${SOURCES})
-unset(SOURCES)
-target_link_libraries(effectbase PUBLIC alutil jsonutil)
-set_target_properties(effectbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-macro(defsimplemod target source)
-    defmod(${target} "src/basic/${source}")
-    target_link_libraries(${target} PRIVATE effectbase alutil jsonutil)
-    target_defsym(${target} PRIVATE "dspmodule_cleanup" "alutil_quit")
-endmacro()
-
-defsimplemod(dspeaxreverb "eaxreverb.c")
-defsimplemod(dspchorus "chorus.c")
-defsimplemod(dspringmod "ringmod.c")
-defsimplemod(dspflanger "flanger.c")
-defsimplemod(dspdistortion "distortion.c")
-defsimplemod(dspfreqshift "freqshift.c")
+set(CMAKE_CURRENT_SOURCE_DIR "src/effects/")
+include("src/effects/CMakeLists.txt")
+set(CMAKE_CURRENT_SOURCE_DIR "src/filters/")
+include("src/filters/CMakeLists.txt")
