@@ -10,3 +10,4 @@ macro(defmod target source)
 endmacro()
 
 defmod(dsplowpass "lowpass.c")
+defmod(dsphighpass "highpass.c")
