@@ -14,18 +14,14 @@ find_package(OpenAL REQUIRED)
 
 # ========================
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/alutil/*.h" "src/alutil/*.c")
-add_library(alutil OBJECT ${SOURCES})
-unset(SOURCES)
+add_library(alutil OBJECT "src/alutil/general.c")
 target_link_libraries(alutil PUBLIC OpenAL::OpenAL)
 target_include_directories(alutil PUBLIC "src/")
 set_target_properties(alutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # ========================
 
-file(GLOB SOURCES CONFIGURE_DEPENDS "src/jsonutil/*.h" "src/jsonutil/*.c")
-add_library(jsonutil OBJECT ${SOURCES})
-unset(SOURCES)
+add_library(jsonutil OBJECT "src/jsonutil/jsonutil.c")
 target_link_libraries(jsonutil PUBLIC json-c::json-c)
 target_include_directories(jsonutil PUBLIC "src/")
 set_target_properties(jsonutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
