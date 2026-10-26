@@ -1,0 +1,27 @@
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/basic/base/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/basic/base/*.c")
+add_library(effectbase OBJECT ${SOURCES})
+unset(SOURCES)
+target_link_libraries(effectbase PUBLIC alutil jsonutil)
+set_target_properties(effectbase PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_library(effectutil OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/basic/util/util.c")
+set_target_properties(effectutil PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+macro(defmod target source)
+    add_library(${target} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/basic/${source}")
+    set_target_properties(${target} PROPERTIES PREFIX "")
+    target_link_libraries(${target} PRIVATE effectbase alutil jsonutil)
+    target_defsym(${target} PRIVATE "dspmodule_cleanup" "alutil_quit")
+endmacro()
+
+macro(defumod target source)
+    defmod(${target} ${source})
+    target_link_libraries(${target} PRIVATE effectutil)
+endmacro()
+
+defumod(dspeaxreverb "eaxreverb.c")
+defumod(dspchorus "chorus.c")
+defumod(dspringmod "ringmod.c")
+defumod(dspflanger "flanger.c")
+defmod(dspdistortion "distortion.c")
+defumod(dspfreqshift "freqshift.c")
