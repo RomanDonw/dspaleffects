@@ -23,16 +23,16 @@ static ALCcontext *alctx;
 static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
 static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
-static bool inited = false;
+static bool inited = false, enableerrorlog, limitoutput;
 static unsigned long currrate;
-static bool enableerrorlog;
 
 #define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
 
-char alutil_init(unsigned long initrate, bool errorlog, bool limitoutput)
+char alutil_init(unsigned long initrate, bool errorlog, bool _limitoutput)
 {
     if (inited) return 1;
     enableerrorlog = errorlog;
+    limitoutput = _limitoutput;
 
     // ===============================
 
@@ -85,7 +85,7 @@ char alutil_render(float interleaved[], unsigned long duration, unsigned long ra
             ALC_FORMAT_CHANNELS_SOFT, ALC_STEREO_SOFT,
             ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
             ALC_FREQUENCY, rate,
-            ALC_OUTPUT_LIMITER_SOFT, AL_FALSE,
+            ALC_OUTPUT_LIMITER_SOFT, limitoutput ? AL_TRUE : AL_FALSE,
             0
         };
         if (!alcResetDeviceSOFT(aldev, attrs)) { ERRORLOG("failed to change sample rate of loopback device"); return 1; }
