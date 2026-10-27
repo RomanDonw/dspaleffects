@@ -65,7 +65,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         }
     }
     
-    if (alutil_init(48000, true, limitoutput, 2)) return 1;
+    if (alutil_init(48000, true, limitoutput, ALC_STEREO_SOFT)) return 1;
     if (alutil_loadEFX()) return 1;
     
     // ===============================

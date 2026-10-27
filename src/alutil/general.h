@@ -14,7 +14,7 @@
 
 // all these functions returns 0 on success.
 
-char alutil_init(unsigned long firstrate, bool errorlog, bool limitoutput, ALCint channels);
+char alutil_init(unsigned long firstrate, bool errorlog, bool limitoutput, ALCint channelconfig);
 char alutil_render(float interleaved[], unsigned long duration, unsigned long rate);
 char alutil_quit(void);
 

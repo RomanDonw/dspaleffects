@@ -26,12 +26,12 @@ static ALCint chconf;
 
 #define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
 
-char alutil_init(unsigned long initrate, bool errorlog, bool _limitoutput, ALCint channels)
+char alutil_init(unsigned long initrate, bool errorlog, bool _limitoutput, ALCint channelconfig)
 {
     if (inited) return 1;
     enableerrorlog = errorlog;
     limitoutput = _limitoutput;
-    chconf = channels;
+    chconf = channelconfig;
 
     // ===============================
 
@@ -56,7 +56,7 @@ char alutil_init(unsigned long initrate, bool errorlog, bool _limitoutput, ALCin
     {
         const ALCint attrs[] =
         {
-            ALC_FORMAT_CHANNELS_SOFT, channels,
+            ALC_FORMAT_CHANNELS_SOFT, channelconfig,
             ALC_FORMAT_TYPE_SOFT, ALC_FLOAT_SOFT,
             ALC_FREQUENCY, initrate,
             ALC_OUTPUT_LIMITER_SOFT, limitoutput ? AL_TRUE : AL_FALSE,
