@@ -15,7 +15,7 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, filtergain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
-static bool allowidlerenders = false;
+static bool allowidlerenders = false, limitoutput = false;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
@@ -23,7 +23,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     {
         int p;
-        while ((p = getopt_long(argc, argv, "g:G:a:v:A:V:i", filter_longopts, NULL)) != -1)
+        while ((p = getopt_long(argc, argv, "g:G:a:v:A:V:io", filter_longopts, NULL)) != -1)
         {
             if (p > 255 || !p) { if (ret = filter_optcallback(p)) return ret; }
             else switch (p)
@@ -57,11 +57,15 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 'i':
                     allowidlerenders = true;
                     break;
+
+                case 'o':
+                    limitoutput = true;
+                    break;
             }
         }
     }
     
-    if (alutil_init(48000, true, false)) return 1;
+    if (alutil_init(48000, true, limitoutput)) return 1;
     if (alutil_loadEFX()) return 1;
     
     // ===============================
@@ -95,8 +99,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nfiltergain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
-        inampmod, involmod, origgain, filtergain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\nfiltergain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s\n",
+        inampmod, involmod, origgain, filtergain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", limitoutput ? "true" : "false");
 
     puts("filterprops:");
     filter_printprops(filter);

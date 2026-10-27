@@ -17,7 +17,7 @@ const unsigned short dspmodule_requiredAPIversion = 1;
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
 static ALuint source, buffer;
-static bool allowidlerenders = false, strongconfoptcheck = true;
+static bool allowidlerenders = false, strongconfoptcheck = true, limitoutput = false;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
@@ -27,7 +27,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     {
         int p;
-        while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:is", effect_longopts, NULL)) != -1)
+        while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:iso", effect_longopts, NULL)) != -1)
         {
             if (p > 255 || !p) { if (ret = effect_optcallback(p)) return ret; }
             else switch (p)
@@ -96,11 +96,15 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 's':
                     strongconfoptcheck = false;
                     break;
+
+                case 'o':
+                    limitoutput = true;
+                    break;
             }
         }
     }
     
-    if (alutil_init(48000, true, false)) return 1;
+    if (alutil_init(48000, true, limitoutput)) return 1;
     if (alutil_loadEFX()) return 1;
     
     // ===============================
@@ -151,8 +155,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n",
-        inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed");
+    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s\n",
+        inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", limitoutput ? "true" : "false");
     configfilename ? printf("configfilename: %s\n", configfilename) : puts("config file not specified");
 
     puts("effectprops:");
