@@ -90,7 +90,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     alGenSources(1, &source);
     alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
-    alSourcei(source, AL_ROLLOFF_FACTOR, 0);
+    alSourcef(source, AL_ROLLOFF_FACTOR, 0);
     alSourcei(source, AL_DIRECT_FILTER, filter);
     
     // ===============================
