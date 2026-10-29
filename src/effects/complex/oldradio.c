@@ -23,7 +23,7 @@
 const unsigned short dspmodule_requiredAPIversion = 1;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1, noisevolume = 0.1;
-static void *inleftport, *inrightport, *outleftport, *outrightport;
+static void *inleftport, *inrightport, *outport;
 static ALuint source, buffer;
 static bool allowidlerenders = false, noisesquelch = true;
 
@@ -84,10 +84,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
     { puts("error adding port for input right channel"); return 1; }
     
-    if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output left channel"); return 1; }
-    if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output right channel"); return 1; }
+    if (!(outport = lapi->addport("output", NULL, DSPPortDirection_Output, 0)))
+    { puts("error adding mono-output port"); return 1; }
     
     // ===============================
     
@@ -154,9 +152,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
 unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
 {
-    float *outleft = lapi->getportbuffer(outleftport, duration);
-    float *outright = lapi->getportbuffer(outrightport, duration);
-    if (!(allowidlerenders || outleft || outright)) return 0;
+    float *out = lapi->getportbuffer(outport, duration);
+    if (!(allowidlerenders || out)) return 0;
     
     const float *inleft = lapi->getportbuffer(inleftport, duration);
     const float *inright = lapi->getportbuffer(inrightport, duration);
@@ -217,12 +214,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     // ===============================
 
     if (alutil_render(buff, duration, rate)) return 1;
-    if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
-    {
-        float s = adjf(buff[i], outampmod) * outvolmod;
-        if (outleft) outleft[i] = s;
-        if (outright) outright[i] = s;
-    }
+    if (out) for (unsigned long i = 0; i < duration; i++) out[i] = adjf(buff[i], outampmod) * outvolmod;
 
     return 0;
 }
