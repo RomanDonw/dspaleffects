@@ -140,7 +140,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\nnoisesquelch: %s\nnoisevolume: %f\n",
+    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\neffectprops:\n  noisesquelch: %s\n  noisevolume: %f\n",
         inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", noisesquelch ? "true" : "false", noisevolume);
 
     *sysname = "OALoldradioEffect";
