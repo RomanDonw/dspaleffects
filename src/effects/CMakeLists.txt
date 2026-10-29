@@ -1,11 +1,15 @@
+option(BUILD_COMPLEX_EFFECTS "Build complex effects" ON)
+
 macro(defmod target source) # define OpenAL effect module.
     add_library(${target} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
     set_target_properties(${target} PROPERTIES PREFIX "")
     target_link_libraries(${target} PRIVATE alutil)
 endmacro()
 
-defmod(dspoldradio "complex/oldradio.c")
-target_defsym(dspoldradio PRIVATE "dspmodule_cleanup" "alutil_quit")
+if(BUILD_COMPLEX_EFFECTS)
+    defmod(dspoldradio "complex/oldradio.c")
+    target_defsym(dspoldradio PRIVATE "dspmodule_cleanup" "alutil_quit")
+endif()
 
 # ========================
 
