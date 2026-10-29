@@ -72,7 +72,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         }
     }
 
-    if (alutil_init(48000, true, false, ALC_STEREO_SOFT)) return 1;
+    if (alutil_init(48000, true, false, ALC_MONO_SOFT)) return 1;
     if (!alIsExtensionPresent("AL_SOFT_effect_target"))
     { puts("required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return 1; }
     if (alutil_loadEFX()) return 1;
@@ -219,8 +219,9 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     if (alutil_render(buff, duration, rate)) return 1;
     if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
     {
-        if (outleft) outleft[i] = adjf(buff[i * 2], outampmod) * outvolmod;
-        if (outright) outright[i] = adjf(buff[i * 2 + 1], outampmod) * outvolmod;
+        float s = adjf(buff[i], outampmod) * outvolmod;
+        if (outleft) outleft[i] = s;
+        if (outright) outright[i] = s;
     }
 
     return 0;
