@@ -7,13 +7,15 @@
 #ifndef ALUTIL_GENERAL_H
 #define ALUTIL_GENERAL_H
 
+#include <dspmodule.h>
 #include <stdbool.h>
 #include <al.h>
 
 // all these functions returns 0 on success.
 
-char alutil_init(unsigned long firstrate, bool errorlog, bool limitoutput);
-char alutil_render(float interleaved[], unsigned long duration, unsigned long rate);
+// [alutil_init & alutil_render]: log can be NULL.
+char alutil_init(DSPLoaderAPILogFunctionPrototype log, unsigned long firstrate, bool limitoutput);
+char alutil_render(DSPLoaderAPILogFunctionPrototype log, float interleaved[], unsigned long duration, unsigned long rate);
 char alutil_quit(void);
 
 #endif

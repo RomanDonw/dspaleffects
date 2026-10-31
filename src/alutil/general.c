@@ -23,15 +23,14 @@ static ALCcontext *alctx;
 static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
 static LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
-static bool inited = false, enableerrorlog, limitoutput;
+static bool inited = false, limitoutput;
 static unsigned long currrate;
 
-#define ERRORLOG(str) { if (enableerrorlog) fputs((str), stderr); }
+#define ERRORLOG(str) { if (log) log(DSPLogLevel_Error, (str)); }
 
-char alutil_init(unsigned long initrate, bool errorlog, bool _limitoutput)
+char alutil_init(DSPLoaderAPILogFunctionPrototype log, unsigned long initrate, bool _limitoutput)
 {
     if (inited) return 1;
-    enableerrorlog = errorlog;
     limitoutput = _limitoutput;
 
     // ===============================
@@ -74,7 +73,7 @@ char alutil_init(unsigned long initrate, bool errorlog, bool _limitoutput)
     return 0;
 }
 
-char alutil_render(float interleaved[], unsigned long duration, unsigned long rate)
+char alutil_render(DSPLoaderAPILogFunctionPrototype log, float interleaved[], unsigned long duration, unsigned long rate)
 {
     if (!(inited && duration)) return 1;
     
@@ -110,7 +109,7 @@ char alutil_quit(void)
     return 0;
 }
 
-char alutil_loadEFX(void)
+char alutil_loadEFX(DSPLoaderAPILogFunctionPrototype log)
 {
     if (!inited) return 1;
 

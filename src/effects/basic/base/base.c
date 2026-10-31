@@ -12,7 +12,7 @@
 
 #include <json-c/json_tokener.h>
 
-const unsigned short dspmodule_requiredAPIversion = 1;
+const unsigned short dspmodule_requiredAPIversion = 3;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1;
 static void *inleftport, *inrightport, *outleftport, *outrightport;
@@ -33,52 +33,52 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             else switch (p)
             {
                 case 'a':
-                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &inampmod) < 1) goto parsefltoptfail;
                     break;
 
                 case 'A':
-                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &outampmod) < 1) goto parsefltoptfail;
                     break;
 
                 case 'v':
-                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &involmod) < 1) goto parsefltoptfail;
                     break;
 
                 case 'V':
-                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &outvolmod) < 1) goto parsefltoptfail;
                     break;
 
                 case 'g':
-                    if (sscanf(optarg, "%f", &origgain) < 1) { puts("error parsing option -g (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &origgain) < 1) goto parsefltoptfail;
                     origgain = clampf(origgain, 0, 1);
                     break;
 
                 case 'G':
-                    if (sscanf(optarg, "%f", &effectgain) < 1) { puts("error parsing option -G (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &effectgain) < 1) goto parsefltoptfail;
                     effectgain = clampf(effectgain, 0, 1);
                     break;
 
                 case 'f':
                 {
                     FILE *f = fopen(optarg, "r");
-                    if (!f) { puts("unable to open config file"); return 1; }
+                    if (!f) { lapi->log(DSPLogLevel_Fatal, "unable to open config file"); return 1; }
 
-                    if (fseek(f, 0, SEEK_END)) { puts("failed to seek to end of config file"); goto errorquit_afterfopen; }
+                    if (fseek(f, 0, SEEK_END)) { lapi->log(DSPLogLevel_Fatal, "failed to seek to end of config file"); goto errorquit_afterfopen; }
                     long size = ftell(f);
-                    if (size < 0) { puts("failed to tell size of config file"); goto errorquit_afterfopen; }
-                    if (fseek(f, 0, SEEK_SET)) { puts("failed to seek to start of config file"); goto errorquit_afterfopen; }
+                    if (size < 0) { lapi->log(DSPLogLevel_Fatal, "failed to tell size of config file"); goto errorquit_afterfopen; }
+                    if (fseek(f, 0, SEEK_SET)) { lapi->log(DSPLogLevel_Fatal, "failed to seek to start of config file"); goto errorquit_afterfopen; }
 
                     char *contents = malloc(size + 1);
-                    if (!contents) { puts("memory allocation failed"); goto errorquit_afterfopen; }
+                    if (!contents) { lapi->log(DSPLogLevel_Fatal, "memory allocation failed"); goto errorquit_afterfopen; }
                     bool success = fread(contents, size, 1, f);
                     fclose(f);
-                    if (!success) { puts("failed reading config file"); goto errorquit_afteralloc; }
+                    if (!success) { lapi->log(DSPLogLevel_Fatal, "failed reading config file"); goto errorquit_afteralloc; }
                     contents[size] = '\0';
 
                     enum json_tokener_error jerr;
                     configroot = json_tokener_parse_verbose(contents, &jerr);
                     free(contents);
-                    if (jerr != json_tokener_success) { printf("JSON parsing error: %s\n", json_tokener_error_desc(jerr)); goto errorquit_afteralloc;  }
+                    if (jerr != json_tokener_success) { lapi->log(DSPLogLevel_Fatal, "JSON parsing error: %s\n", json_tokener_error_desc(jerr)); goto errorquit_afteralloc;  }
 
                     configfilename = optarg;
                     break;
@@ -100,12 +100,16 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                 case 'o':
                     limitoutput = true;
                     break;
+
+                parsefltoptfail:
+                    lapi->log(DSPLogLevel_Fatal, "failed parsing option -%c (required float)", (char)p);
+                return 1;
             }
         }
     }
     
-    if (alutil_init(48000, true, limitoutput)) return 1;
-    if (alutil_loadEFX()) return 1;
+    if (alutil_init(lapi->log, 48000, limitoutput)) return 1;
+    if (alutil_loadEFX(lapi->log)) return 1;
     
     // ===============================
 
@@ -117,14 +121,14 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     // ===============================
 
     if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input left channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for input left channel"); return 1; }
     if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input right channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for input right channel"); return 1; }
     
     if (!(outleftport = lapi->addport("output_left", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output left channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for output left channel"); return 1; }
     if (!(outrightport = lapi->addport("output_right", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding port for output right channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for output right channel"); return 1; }
 
     // ===============================
 
@@ -155,11 +159,11 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s\n",
+    lapi->log(DSPLogLevel_Info, "inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s",
         inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", limitoutput ? "true" : "false");
-    configfilename ? printf("configfilename: %s\n", configfilename) : puts("config file not specified");
+    configfilename ? lapi->log(DSPLogLevel_Info, "configfilename: %s\n", configfilename) : lapi->log(DSPLogLevel_Info, "config file not specified");
 
-    puts("effectprops:");
+    lapi->log(DSPLogLevel_Info, "effectprops:");
     effect_printprops(effect);
     alDeleteEffects(1, &effect);
     return 0;
@@ -190,7 +194,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     // ===============================
 
-    if (alutil_render(buff, duration, rate)) return 1;
+    if (alutil_render(lapi->log, buff, duration, rate)) return 1;
     if (outleft || outright) for (unsigned long i = 0; i < duration; i++)
     {
         if (outleft) outleft[i] = adjf(buff[i * 2], outampmod) * outvolmod;
