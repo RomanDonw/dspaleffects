@@ -17,7 +17,7 @@ const struct option filter_longopts[] =
 #include "macro.h"
 static floatopt floatopts[1] = {0};
 
-unsigned short filter_optcallback(int optid)
+unsigned short filter_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -26,7 +26,7 @@ unsigned short filter_optcallback(int optid)
     return 0;
 }
 
-unsigned short filter_poststartup(ALuint filter, float filtergain, const char **sysname, const char **dispname)
+unsigned short filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint filter, float filtergain, const char **sysname, const char **dispname)
 {
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     alFilterf(filter, AL_LOWPASS_GAIN, filtergain);
@@ -38,9 +38,9 @@ unsigned short filter_poststartup(ALuint filter, float filtergain, const char **
     return 0;
 }
 
-void filter_printprops(ALuint filter)
+void filter_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint filter)
 {
     float v;
     alGetFilterf(filter, AL_LOWPASS_GAINHF, &v);
-    printf("  gainHF: %f\n", v);
+    log(DSPLogLevel_Info, "  gainHF: %f", v);
 }

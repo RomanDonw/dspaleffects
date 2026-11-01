@@ -25,7 +25,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         int p;
         while ((p = getopt_long(argc, argv, "g:G:a:v:A:V:io", filter_longopts, NULL)) != -1)
         {
-            if (p > 255 || !p) { if (ret = filter_optcallback(p)) return ret; }
+            if (p > 255 || !p) { if (ret = filter_optcallback(lapi->log, p)) return ret; }
             else switch (p)
             {
                 case 'a':
@@ -76,7 +76,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     ALuint filter;
     alGenFilters(1, &filter);
-    if (ret = filter_poststartup(filter, filtergain, sysname, dispname)) return ret;
+    if (ret = filter_poststartup(lapi->log, filter, filtergain, sysname, dispname)) return ret;
 
     // ===============================
 
@@ -103,11 +103,11 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     // ===============================
 
-    lapi->log(DSPLogLevel_Info, "inampmod: %f\ninvolmod: %f\noriggain: %f\nfiltergain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s\n",
+    lapi->log(DSPLogLevel_Info, "inampmod: %f\ninvolmod: %f\noriggain: %f\nfiltergain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s",
         inampmod, involmod, origgain, filtergain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", limitoutput ? "true" : "false");
 
     lapi->log(DSPLogLevel_Info, "filterprops:");
-    filter_printprops(filter);
+    filter_printprops(lapi->log, filter);
     alDeleteFilters(1, &filter);
     return 0;
 }
