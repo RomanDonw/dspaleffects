@@ -29,7 +29,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         int p;
         while ((p = getopt_long(argc, argv, "g:G:f:a:v:A:V:iso", effect_longopts, NULL)) != -1)
         {
-            if (p > 255 || !p) { if (ret = effect_optcallback(p)) return ret; }
+            if (p > 255 || !p) { if (ret = effect_optcallback(lapi->log, p)) return ret; }
             else switch (p)
             {
                 case 'a':
@@ -115,7 +115,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     ALuint effect;
     alGenEffects(1, &effect);
-    if (ret = effect_poststartup(configroot, strongconfoptcheck, effect, sysname, dispname)) return ret;
+    if (ret = effect_poststartup(lapi->log, configroot, strongconfoptcheck, effect, sysname, dispname)) return ret;
     if (configroot) json_object_put(configroot);
 
     // ===============================
@@ -164,7 +164,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     configfilename ? lapi->log(DSPLogLevel_Info, "configfilename: %s\n", configfilename) : lapi->log(DSPLogLevel_Info, "config file not specified");
 
     lapi->log(DSPLogLevel_Info, "effectprops:");
-    effect_printprops(effect);
+    effect_printprops(lapi->log, effect);
     alDeleteEffects(1, &effect);
     return 0;
 }

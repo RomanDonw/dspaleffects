@@ -28,7 +28,7 @@ const struct option effect_longopts[] =
 static floatopt floatopts[4] = {0};
 static intopt intopts[2] = {0};
 
-unsigned short effect_optcallback(int optid)
+unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -38,21 +38,25 @@ unsigned short effect_optcallback(int optid)
         PARSELONGFLOATOPT(259, 3, "rate")
 
         case 260:
-            if (sscanf(optarg, "%i", &intopts[0].value) < 1) { puts("error parsing option --phase (required integer)"); return 1; }
+            if (sscanf(optarg, "%i", &intopts[0].value) < 1) { log(DSPLogLevel_Fatal, "error parsing option --phase (required integer)"); return 1; }
             intopts[0].has = true;
             break;
 
         case 261:
             if (strfcmpl(optarg, "sinusoid")) intopts[1].value = AL_CHORUS_WAVEFORM_SINUSOID;
             else if (strfcmpl(optarg, "triangle")) intopts[1].value = AL_CHORUS_WAVEFORM_TRIANGLE;
-            else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", optarg); return 1; }
+            else
+            {
+                log(DSPLogLevel_Fatal, "incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")", optarg);
+                return 1;
+            }
             intopts[1].has = true;
             break;
     }
     return 0;
 }
 
-unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {   
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_CHORUS);
 
@@ -70,23 +74,29 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
         {
             if (json_object_object_get_ex(configroot, "phase", &jobj))
             {
-                if (json_object_get_type(jobj) != json_type_int) { puts("parsing \"phase\" config option failed (required int)"); return 1; }
+                if (json_object_get_type(jobj) != json_type_int)
+                { log(DSPLogLevel_Fatal, "parsing \"phase\" config option failed (required int)"); return 1; }
                 alEffecti(effect, AL_CHORUS_PHASE, json_object_get_int(jobj));
             }
-            else if (strongconfoptcheck) { puts("key \"phase\" doesnt found in config file"); return 1; }
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"phase\" doesnt found in config file"); return 1; }
         }
         
         if (!intopts[1].has)
         {
             if (json_object_object_get_ex(configroot, "waveform", &jobj))
             {
-                if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
+                if (json_object_get_type(jobj) != json_type_string)
+                { log(DSPLogLevel_Fatal, "parsing \"waveform\" config option failed (required string)"); return 1; }
                 const char *waveform = json_object_get_string(jobj);
                 if (strfcmpl(waveform, "sinusoid")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_SINUSOID);
                 else if (strfcmpl(waveform, "triangle")) alEffecti(effect, AL_CHORUS_WAVEFORM, AL_CHORUS_WAVEFORM_TRIANGLE);
-                else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")\n", waveform); return 1; }
+                else
+                {
+                    log(DSPLogLevel_Fatal, "incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")", waveform);
+                    return 1;
+                }
             }
-            else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"waveform\" doesnt found in config file"); return 1; }
         }
     }
 
@@ -103,28 +113,29 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     return 0;
 }
 
-void effect_printprops(ALuint effect)
+void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     union { float f; int i; } v;
-    alGetEffectf(effect, AL_CHORUS_DELAY, &v.f); printf("  delay: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_DEPTH, &v.f); printf("  depth: %f\n", v.f);
-    alGetEffectf(effect, AL_CHORUS_FEEDBACK, &v.f); printf("  feedback: %f\n", v.f);
-    alGetEffecti(effect, AL_CHORUS_PHASE, &v.i); printf("  phase: %i\n", v.i);
-    alGetEffectf(effect, AL_CHORUS_RATE, &v.f); printf("  rate: %f\n", v.f);
+    alGetEffectf(effect, AL_CHORUS_DELAY, &v.f); log(DSPLogLevel_Info, "  delay: %f", v.f);
+    alGetEffectf(effect, AL_CHORUS_DEPTH, &v.f); log(DSPLogLevel_Info, "  depth: %f", v.f);
+    alGetEffectf(effect, AL_CHORUS_FEEDBACK, &v.f); log(DSPLogLevel_Info, "  feedback: %f", v.f);
+    alGetEffecti(effect, AL_CHORUS_PHASE, &v.i); log(DSPLogLevel_Info, "  phase: %i", v.i);
+    alGetEffectf(effect, AL_CHORUS_RATE, &v.f); log(DSPLogLevel_Info, "  rate: %f", v.f);
 
+    const char *waveformstr;
     alGetEffecti(effect, AL_CHORUS_WAVEFORM, &v.i);
-    printf("  waveform: ");
     switch (v.i)
     {
         case AL_CHORUS_WAVEFORM_SINUSOID:
-            puts("sinusoid");
+            waveformstr = "sinusoid";
             break;
 
         case AL_CHORUS_WAVEFORM_TRIANGLE:
-            puts("triangle");
+            waveformstr = "triangle";
             break;
 
         default:
-            puts("(undefined)");
+            waveformstr = "(undefined)";
     }
+    log(DSPLogLevel_Info, "  waveform: %s", waveformstr);
 }

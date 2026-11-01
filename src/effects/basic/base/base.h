@@ -7,6 +7,7 @@
 #ifndef BASE_H
 #define BASE_H
 
+#include <dspmodule.h>
 #include <getopt.h>
 
 #include "alutil/general.h"
@@ -16,9 +17,9 @@
 
 extern const struct option effect_longopts[];
 
-extern unsigned short effect_optcallback(int optid);
+extern unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid);
 // [effect_poststartup]: configroot can be NULL.
-extern unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname);
-extern void effect_printprops(ALuint effect);
+extern unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname);
+extern void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect);
 
 #endif

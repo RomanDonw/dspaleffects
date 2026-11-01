@@ -28,7 +28,7 @@ const struct option effect_longopts[] =
 static floatopt floatopts[4] = {0};
 static intopt intopts[2] = {0};
 
-unsigned short effect_optcallback(int optid)
+unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -52,7 +52,7 @@ unsigned short effect_optcallback(int optid)
     return 0;
 }
 
-unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_FLANGER);
 
@@ -103,7 +103,7 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     return 0;
 }
 
-void effect_printprops(ALuint effect)
+void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     union { float f; int i; } v;
     alGetEffectf(effect, AL_FLANGER_DELAY, &v.f); printf("  delay: %f\n", v.f);
