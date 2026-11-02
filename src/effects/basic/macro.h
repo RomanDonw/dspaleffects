@@ -11,10 +11,22 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "alutil/EFX.h"
-#include "util/util.h"
 #include "jsonutil/jsonutil.h"
+
+// returns non-zero if ASCIIZ-strings fully equals with ignoring characters case and 0 otherwise.
+char strfcmpl(const char *str1, const char *str2)
+{
+    while ((*str1) && (*str2))
+    {
+        if (tolower(*str1) != tolower(*str2)) return 0;
+        str1++;
+        str2++;
+    }
+    return 1;
+}
 
 struct floatopt { bool has; float value; } typedef floatopt;
 struct intopt { bool has; int value; } typedef intopt;

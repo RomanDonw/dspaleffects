@@ -1,0 +1,12 @@
+{
+    "lowGain": 0.126,
+    "lowCutoff": 300,
+    "mid1Gain": 1,
+    "mid1Center": 1650,
+    "mid1Width": 1,
+    "mid2Gain": 0.126,
+    "mid2Center": 3000,
+    "mid2Width": 0.5,
+    "highGain": 0.126,
+    "highCutoff": 4000
+}
