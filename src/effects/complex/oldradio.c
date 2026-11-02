@@ -20,7 +20,7 @@
 #include "alutil/general.h"
 #include "alutil/EFX.h"
 
-const unsigned short dspmodule_requiredAPIversion = 1;
+const unsigned short dspmodule_requiredAPIversion = 3;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1, noisevolume = 0.1;
 static void *inleftport, *inrightport, *outport;
@@ -42,19 +42,19 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             switch (p)
             {
                 case 'a':
-                    if (sscanf(optarg, "%f", &inampmod) < 1) { puts("error parsing option -a (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &inampmod) < 1) goto parsefltshortoptfail;
                     break;
 
                 case 'A':
-                    if (sscanf(optarg, "%f", &outampmod) < 1) { puts("error parsing option -A (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &outampmod) < 1) goto parsefltshortoptfail;
                     break;
 
                 case 'v':
-                    if (sscanf(optarg, "%f", &involmod) < 1) { puts("error parsing option -v (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &involmod) < 1) goto parsefltshortoptfail;
                     break;
 
                 case 'V':
-                    if (sscanf(optarg, "%f", &outvolmod) < 1) { puts("error parsing option -V (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &outvolmod) < 1) goto parsefltshortoptfail;
                     break;
 
                 case 'i':
@@ -62,30 +62,35 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     break;
 
                 case 256:
-                    if (sscanf(optarg, "%f", &noisevolume) < 1) { puts("error parsing option --noiseVolume (required float)"); return 1; }
+                    if (sscanf(optarg, "%f", &noisevolume) < 1)
+                    { lapi->log(DSPLogLevel_Fatal, "error parsing option --noiseVolume (required float)"); return 1; }
                     break;
 
                 case 257:
                     noisesquelch = false;
                     break;
+
+                parsefltshortoptfail:
+                    lapi->log(DSPLogLevel_Fatal, "failed parsing option -%c (required float)", (char)p);
+                return 1;
             }
         }
     }
 
-    if (alutil_init(48000, true, false, ALC_MONO_SOFT)) return 1;
+    if (alutil_init(lapi->log, 48000, false, ALC_MONO_SOFT)) return 1;
     if (!alIsExtensionPresent("AL_SOFT_effect_target"))
-    { puts("required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return 1; }
-    if (alutil_loadEFX()) return 1;
+    { lapi->log(DSPLogLevel_Fatal, "required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return 1; }
+    if (alutil_loadEFX(lapi->log)) return 1;
 
     // ===============================
 
     if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input left channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for input left channel"); return 1; }
     if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
-    { puts("error adding port for input right channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for input right channel"); return 1; }
     
     if (!(outport = lapi->addport("output", NULL, DSPPortDirection_Output, 0)))
-    { puts("error adding mono-output port"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding mono-output port"); return 1; }
     
     // ===============================
     
@@ -138,7 +143,8 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     
     // ===============================
 
-    printf("inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\neffectprops:\n  noisesquelch: %s\n  noisevolume: %f\n",
+    lapi->log(DSPLogLevel_Info, "inampmod: %f\ninvolmod: %f\noutampmod: %f\noutvolmod: %f\nidle renders: %s\n"
+        "effectprops:\n  noisesquelch: %s\n  noisevolume: %f",
         inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", noisesquelch ? "true" : "false", noisevolume);
 
     *sysname = "OALoldradioEffect";
@@ -213,7 +219,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
     // ===============================
 
-    if (alutil_render(buff, duration, rate)) return 1;
+    if (alutil_render(lapi->log, buff, duration, rate)) return 1;
     if (out) for (unsigned long i = 0; i < duration; i++) out[i] = adjf(buff[i], outampmod) * outvolmod;
 
     return 0;
