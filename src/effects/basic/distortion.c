@@ -24,7 +24,7 @@ const struct option effect_longopts[] =
 #include "macro.h"
 static floatopt floatopts[5] = {0};
 
-unsigned short effect_optcallback(int optid)
+unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -37,7 +37,7 @@ unsigned short effect_optcallback(int optid)
     return 0;
 }
 
-unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_DISTORTION);
 
@@ -64,12 +64,12 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     return 0;
 }
 
-void effect_printprops(ALuint effect)
+void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     float f;
-    alGetEffectf(effect, AL_DISTORTION_EDGE, &f); printf("  edge: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_GAIN, &f); printf("  gain: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_LOWPASS_CUTOFF, &f); printf("  lowpassCutoff: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_EQCENTER, &f); printf("  eqCenter: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_EQBANDWIDTH, &f); printf("  eqBandwidth: %f\n", f);
+    alGetEffectf(effect, AL_DISTORTION_EDGE, &f); log(DSPLogLevel_Info, "  edge: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_GAIN, &f); log(DSPLogLevel_Info, "  gain: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_LOWPASS_CUTOFF, &f); log(DSPLogLevel_Info, "  lowpassCutoff: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_EQCENTER, &f); log(DSPLogLevel_Info, "  eqCenter: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_EQBANDWIDTH, &f); log(DSPLogLevel_Info, "  eqBandwidth: %f", f);
 }

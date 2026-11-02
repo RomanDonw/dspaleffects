@@ -7,6 +7,7 @@
 #ifndef ALUTIL_EFX_H
 #define ALUTIL_EFX_H
 
+#include <dspmodule.h>
 #include <alext.h>
 
 #ifdef ALUTIL_EFX_IMPL
@@ -53,7 +54,7 @@ ALUTIL_EFX_EXTERN_KW LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
 
 #undef ALUTIL_EFX_EXTERN_KW
 
-// returns 0 on success.
-char alutil_loadEFX(void);
+// returns 0 on success, log can be NULL.
+char alutil_loadEFX(DSPLoaderAPILogFunctionPrototype log);
 
 #endif

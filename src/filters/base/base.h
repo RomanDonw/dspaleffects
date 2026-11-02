@@ -7,6 +7,7 @@
 #ifndef BASE_H
 #define BASE_H
 
+#include <dspmodule.h>
 #include <getopt.h>
 
 #include "alutil/general.h"
@@ -14,9 +15,9 @@
 
 extern const struct option filter_longopts[];
 
-extern unsigned short filter_optcallback(int optid);
+extern unsigned short filter_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid);
 // [filter_poststartup]: configroot can be NULL.
-extern unsigned short filter_poststartup(ALuint filter, float filtergain, const char **sysname, const char **dispname);
-extern void filter_printprops(ALuint filter);
+extern unsigned short filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint filter, float filtergain, const char **sysname, const char **dispname);
+extern void filter_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint filter);
 
 #endif

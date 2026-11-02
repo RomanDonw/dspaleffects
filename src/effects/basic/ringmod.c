@@ -25,7 +25,7 @@ const struct option effect_longopts[] =
 static floatopt floatopts[2] = {0};
 static intopt intopts[1] = {0};
 
-unsigned short effect_optcallback(int optid)
+unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -36,14 +36,19 @@ unsigned short effect_optcallback(int optid)
             if (strfcmpl(optarg, "sinusoid")) intopts[0].value = AL_RING_MODULATOR_SINUSOID;
             else if (strfcmpl(optarg, "sawtooth")) intopts[0].value = AL_RING_MODULATOR_SAWTOOTH;
             else if (strfcmpl(optarg, "square")) intopts[0].value = AL_RING_MODULATOR_SQUARE;
-            else { printf("incorrect --waveform enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")\n", optarg); return 1; }
+            else
+            {
+                log(DSPLogLevel_Fatal, "incorrect --waveform enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")",
+                    optarg);
+                return 1;
+            }
             intopts[0].has = true;
             break;
     }
     return 0;
 }
 
-unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_RING_MODULATOR);
 
@@ -59,14 +64,21 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
         {
             if (json_object_object_get_ex(configroot, "waveform", &jobj))
             {
-                if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"waveform\" config option failed (required string)"); return 1; }
+                if (json_object_get_type(jobj) != json_type_string)
+                { log(DSPLogLevel_Fatal, "parsing \"waveform\" config option failed (required string)"); return 1; }
+
                 const char *waveform = json_object_get_string(jobj);
                 if (strfcmpl(waveform, "sinusoid")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SINUSOID);
                 else if (strfcmpl(waveform, "sawtooth")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SAWTOOTH);
                 else if (strfcmpl(waveform, "square")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SQUARE);
-                else { printf("incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")\n", waveform); return 1; }
+                else
+                {
+                    log(DSPLogLevel_Fatal, "incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")",
+                        waveform);
+                    return 1;
+                }
             }
-            else if (strongconfoptcheck) { puts("key \"waveform\" doesnt found in config file"); return 1; }
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"waveform\" doesnt found in config file"); return 1; }
         }
     }
 
@@ -80,29 +92,30 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     return 0;
 }
 
-void effect_printprops(ALuint effect)
+void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     union { float f; int i; } v;
-    alGetEffectf(effect, AL_RING_MODULATOR_FREQUENCY, &v.f); printf("  frequency: %f\n", v.f);
-    alGetEffectf(effect, AL_RING_MODULATOR_HIGHPASS_CUTOFF, &v.f); printf("  highpassCutoff: %f\n", v.f);
+    alGetEffectf(effect, AL_RING_MODULATOR_FREQUENCY, &v.f); log(DSPLogLevel_Info, "  frequency: %f", v.f);
+    alGetEffectf(effect, AL_RING_MODULATOR_HIGHPASS_CUTOFF, &v.f); log(DSPLogLevel_Info, "  highpassCutoff: %f", v.f);
 
     alGetEffecti(effect, AL_RING_MODULATOR_WAVEFORM, &v.i);
-    printf("  waveform: ");
+    const char *waveformstr;
     switch (v.i)
     {
         case AL_RING_MODULATOR_SINUSOID:
-            puts("sinusoid");
+            waveformstr = "sinusoid";
             break;
 
         case AL_RING_MODULATOR_SAWTOOTH:
-            puts("sawtooth");
+            waveformstr = "sawtooth";
             break;
 
         case AL_RING_MODULATOR_SQUARE:
-            puts("square");
+            waveformstr = "square";
             break;
 
         default:
-            puts("(undefined)");
+            waveformstr = "(undefined)";
     }
+    log(DSPLogLevel_Info, "  waveform: %s", waveformstr);
 }

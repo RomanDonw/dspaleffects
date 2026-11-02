@@ -47,7 +47,7 @@ static floatopt floatopts[20] = {0};
 static intopt intopts[1] = {0};
 static vec3opt vec3opts[2] = {0};
 
-unsigned short effect_optcallback(int optid)
+unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -80,7 +80,7 @@ unsigned short effect_optcallback(int optid)
     return 0;
 }
 
-unsigned short effect_poststartup(const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
 
@@ -146,30 +146,30 @@ unsigned short effect_poststartup(const struct json_object *configroot, bool str
     return 0;
 }
 
-void effect_printprops(ALuint effect)
+void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     union { float f3[3]; int i; } v;
-    alGetEffectf(effect, AL_EAXREVERB_DENSITY, v.f3); printf("  density: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_DIFFUSION, v.f3); printf("  diffusion: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_GAIN, v.f3); printf("  gain: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_GAINHF, v.f3); printf("  gainHF: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_GAINLF, v.f3); printf("  gainLF: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_DECAY_TIME, v.f3); printf("  decayTime: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_DECAY_HFRATIO, v.f3); printf("  decayHFRatio: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_DECAY_LFRATIO, v.f3); printf("  decayLFRatio: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_REFLECTIONS_GAIN, v.f3); printf("  reflectionsGain: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_REFLECTIONS_DELAY, v.f3); printf("  reflectionsDelay: %f\n", *v.f3);
-    alGetEffectfv(effect, AL_EAXREVERB_REFLECTIONS_PAN, v.f3); printf("  reflectionsPan: [%f, %f, %f]\n", v.f3[0], v.f3[1], v.f3[2]);
-    alGetEffectf(effect, AL_EAXREVERB_LATE_REVERB_GAIN, v.f3); printf("  lateReverbGain: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_LATE_REVERB_DELAY, v.f3); printf("  lateReverbDelay: %f\n", *v.f3);
-    alGetEffectfv(effect, AL_EAXREVERB_LATE_REVERB_PAN, v.f3); printf("  lateReverbPan: [%f, %f, %f]\n", v.f3[0], v.f3[1], v.f3[2]);
-    alGetEffectf(effect, AL_EAXREVERB_ECHO_TIME, v.f3); printf("  echoTime: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_ECHO_DEPTH, v.f3); printf("  echoDepth: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_MODULATION_TIME, v.f3); printf("  modulationTime: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_MODULATION_DEPTH, v.f3); printf("  modulationDepth: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_AIR_ABSORPTION_GAINHF, v.f3); printf("  airAbsorptionGainHF: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_HFREFERENCE, v.f3); printf("  HFReference: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_LFREFERENCE, v.f3); printf("  LFReference: %f\n", *v.f3);
-    alGetEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, v.f3); printf("  roomRolloffFactor: %f\n", *v.f3);
-    alGetEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, &v.i); printf("  decayHFLimit: %s\n", v.i ? "true" : "false");
+    alGetEffectf(effect, AL_EAXREVERB_DENSITY, v.f3); log(DSPLogLevel_Info, "  density: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DIFFUSION, v.f3); log(DSPLogLevel_Info, "  diffusion: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_GAIN, v.f3); log(DSPLogLevel_Info, "  gain: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_GAINHF, v.f3); log(DSPLogLevel_Info, "  gainHF: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_GAINLF, v.f3); log(DSPLogLevel_Info, "  gainLF: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DECAY_TIME, v.f3); log(DSPLogLevel_Info, "  decayTime: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DECAY_HFRATIO, v.f3); log(DSPLogLevel_Info, "  decayHFRatio: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_DECAY_LFRATIO, v.f3); log(DSPLogLevel_Info, "  decayLFRatio: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_REFLECTIONS_GAIN, v.f3); log(DSPLogLevel_Info, "  reflectionsGain: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_REFLECTIONS_DELAY, v.f3); log(DSPLogLevel_Info, "  reflectionsDelay: %f", *v.f3);
+    alGetEffectfv(effect, AL_EAXREVERB_REFLECTIONS_PAN, v.f3); log(DSPLogLevel_Info, "  reflectionsPan: [%f, %f, %f]", v.f3[0], v.f3[1], v.f3[2]);
+    alGetEffectf(effect, AL_EAXREVERB_LATE_REVERB_GAIN, v.f3); log(DSPLogLevel_Info, "  lateReverbGain: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_LATE_REVERB_DELAY, v.f3); log(DSPLogLevel_Info, "  lateReverbDelay: %f", *v.f3);
+    alGetEffectfv(effect, AL_EAXREVERB_LATE_REVERB_PAN, v.f3); log(DSPLogLevel_Info, "  lateReverbPan: [%f, %f, %f]", v.f3[0], v.f3[1], v.f3[2]);
+    alGetEffectf(effect, AL_EAXREVERB_ECHO_TIME, v.f3); log(DSPLogLevel_Info, "  echoTime: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_ECHO_DEPTH, v.f3); log(DSPLogLevel_Info, "  echoDepth: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_MODULATION_TIME, v.f3); log(DSPLogLevel_Info, "  modulationTime: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_MODULATION_DEPTH, v.f3); log(DSPLogLevel_Info, "  modulationDepth: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_AIR_ABSORPTION_GAINHF, v.f3); log(DSPLogLevel_Info, "  airAbsorptionGainHF: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_HFREFERENCE, v.f3); log(DSPLogLevel_Info, "  HFReference: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_LFREFERENCE, v.f3); log(DSPLogLevel_Info, "  LFReference: %f", *v.f3);
+    alGetEffectf(effect, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, v.f3); log(DSPLogLevel_Info, "  roomRolloffFactor: %f", *v.f3);
+    alGetEffecti(effect, AL_EAXREVERB_DECAY_HFLIMIT, &v.i); log(DSPLogLevel_Info, "  decayHFLimit: %s", v.i ? "true" : "false");
 }
