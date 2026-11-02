@@ -11,8 +11,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "util/util.h"
-
 const struct option effect_longopts[] =
 {
     { .name = "frequency", .has_arg = required_argument, .val = 256, .flag = NULL },
