@@ -78,7 +78,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
                     enum json_tokener_error jerr;
                     configroot = json_tokener_parse_verbose(contents, &jerr);
                     free(contents);
-                    if (jerr != json_tokener_success) { lapi->log(DSPLogLevel_Fatal, "JSON parsing error: %s\n", json_tokener_error_desc(jerr)); goto errorquit_afteralloc;  }
+                    if (jerr != json_tokener_success) { lapi->log(DSPLogLevel_Fatal, "JSON parsing error: %s", json_tokener_error_desc(jerr)); goto errorquit_afteralloc;  }
 
                     configfilename = optarg;
                     break;
@@ -161,7 +161,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
     lapi->log(DSPLogLevel_Info, "inampmod: %f\ninvolmod: %f\noriggain: %f\neffectgain: %f\noutampmod: %f\noutvolmod: %f\nidlerendering: %s\nlimitoutput: %s",
         inampmod, involmod, origgain, effectgain, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", limitoutput ? "true" : "false");
-    configfilename ? lapi->log(DSPLogLevel_Info, "configfilename: %s\n", configfilename) : lapi->log(DSPLogLevel_Info, "config file not specified");
+    configfilename ? lapi->log(DSPLogLevel_Info, "configfilename: %s", configfilename) : lapi->log(DSPLogLevel_Info, "config file not specified");
 
     lapi->log(DSPLogLevel_Info, "effectprops:");
     effect_printprops(lapi->log, effect);

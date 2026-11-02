@@ -30,7 +30,11 @@ static intopt intopts[2] = {0};
         if (strfcmpl(optarg, "down")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_DOWN;\
         else if (strfcmpl(optarg, "up")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_UP;\
         else if (strfcmpl(optarg, "off")) intopts[optindex].value = AL_FREQUENCY_SHIFTER_DIRECTION_OFF;\
-        else { printf("incorrect --" optname " enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")\n", optarg); return 1; }\
+        else\
+        {\
+            log(DSPLogLevel_Fatal, "incorrect --" optname " enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")", optarg);\
+            return 1;\
+        }\
         intopts[optindex].has = true;\
         break;
 
@@ -40,14 +44,21 @@ static intopt intopts[2] = {0};
         {\
             if (json_object_object_get_ex(configroot, strname, &jobj))\
             {\
-                if (json_object_get_type(jobj) != json_type_string) { puts("parsing \"" strname "\" config option failed (required string)"); return 1; }\
+                if (json_object_get_type(jobj) != json_type_string)\
+                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required string)"); return 1; }\
+                \
                 const char *direction = json_object_get_string(jobj);\
                 if (strfcmpl(direction, "down")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_DOWN);\
                 else if (strfcmpl(direction, "up")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_UP);\
                 else if (strfcmpl(direction, "off")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_OFF);\
-                else { printf("incorrect \"" strname "\" enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")\n", direction); return 1; }\
+                else\
+                {\
+                    log(DSPLogLevel_Fatal, "incorrect \"" strname "\" enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")",\
+                        direction);\
+                    return 1;\
+                }\
             }\
-            else if (strongconfoptcheck) { puts("key \"" strname "\" doesnt found in config file"); return 1; }\
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return 1; }\
         }\
     }
 
@@ -88,30 +99,31 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 #define PRINTDIROPT(optname, alname) \
     {\
         alGetEffecti(effect, alname, &v.i);\
-        printf("  " optname ": ");\
         switch (v.i)\
         {\
             case AL_FREQUENCY_SHIFTER_DIRECTION_DOWN:\
-                puts("down");\
+                vstr = "down";\
                 break;\
             \
             case AL_FREQUENCY_SHIFTER_DIRECTION_UP:\
-                puts("up");\
+                vstr = "up";\
                 break;\
             \
             case AL_FREQUENCY_SHIFTER_DIRECTION_OFF:\
-                puts("off");\
+                vstr = "off";\
                 break;\
             \
             default:\
-                puts("(undefined)");\
+                vstr = "(undefined)";\
         }\
+        log(DSPLogLevel_Info, "  " optname ": %s", vstr);\
     }
 
 void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     union { float f; int i; } v;
-    alGetEffectf(effect, AL_RING_MODULATOR_FREQUENCY, &v.f); printf("  frequency: %f\n", v.f);
+    const char *vstr;
+    alGetEffectf(effect, AL_RING_MODULATOR_FREQUENCY, &v.f); log(DSPLogLevel_Info, "  frequency: %f", v.f);
     PRINTDIROPT("leftDirection", AL_FREQUENCY_SHIFTER_LEFT_DIRECTION);
     PRINTDIROPT("rightDirection", AL_FREQUENCY_SHIFTER_RIGHT_DIRECTION);
 }

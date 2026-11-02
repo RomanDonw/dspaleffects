@@ -67,9 +67,9 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
 {
     float f;
-    alGetEffectf(effect, AL_DISTORTION_EDGE, &f); printf("  edge: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_GAIN, &f); printf("  gain: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_LOWPASS_CUTOFF, &f); printf("  lowpassCutoff: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_EQCENTER, &f); printf("  eqCenter: %f\n", f);
-    alGetEffectf(effect, AL_DISTORTION_EQBANDWIDTH, &f); printf("  eqBandwidth: %f\n", f);
+    alGetEffectf(effect, AL_DISTORTION_EDGE, &f); log(DSPLogLevel_Info, "  edge: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_GAIN, &f); log(DSPLogLevel_Info, "  gain: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_LOWPASS_CUTOFF, &f); log(DSPLogLevel_Info, "  lowpassCutoff: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_EQCENTER, &f); log(DSPLogLevel_Info, "  eqCenter: %f", f);
+    alGetEffectf(effect, AL_DISTORTION_EQBANDWIDTH, &f); log(DSPLogLevel_Info, "  eqBandwidth: %f", f);
 }
