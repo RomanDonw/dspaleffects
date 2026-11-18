@@ -38,10 +38,10 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
         if (json_object_object_get_ex(configroot, strname, &jobj))\
         {\
             if (jsonutil_getvec3f(jobj, vec3f))\
-            { log(DSPLogLevel_Fatal, "failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return 1; }\
+            { log(DSPLogLevel_Fatal, "failed parsing option \"" strname "\" (required vector/array of 3 floats)"); return DSPModuleReturnCode_Stop; }\
             alEffectfv(effect, alname, vec3f);\
         }\
-        else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return 1; }\
+        else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }\
     }
 
 #ifdef MACRO_USEFLTARRAY
@@ -51,10 +51,10 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
             if (json_object_object_get_ex(configroot, strname, &jobj))\
             {\
                 if (jsonutil_getfloat(jobj, vec3f))\
-                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required float)"); return 1; }\
+                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required float)"); return DSPModuleReturnCode_Stop; }\
                 alEffectf(effect, alname, *vec3f);\
             }\
-            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return 1; }\
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }\
         }
 #else
     #define GETFLTCONFOPTHELPER(floatoptsidx, strname, alname) \
@@ -63,10 +63,10 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
             if (json_object_object_get_ex(configroot, strname, &jobj))\
             {\
                 if (jsonutil_getfloat(jobj, &f))\
-                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required float)"); return 1; }\
+                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required float)"); return DSPModuleReturnCode_Stop; }\
                 alEffectf(effect, alname, f);\
             }\
-            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return 1; }\
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }\
         }
 #endif
 
@@ -75,23 +75,23 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
     {\
         if (json_object_object_get_ex(configroot, strname, &jobj))\
         {\
-            if (jsonutil_getbool(jobj, &flag)) { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required boolean)"); return 1; }\
+            if (jsonutil_getbool(jobj, &flag)) { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required boolean)"); return DSPModuleReturnCode_Stop; }\
             alEffecti(effect, alname, flag);\
         }\
-        else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return 1; }\
+        else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }\
     }
 
 #define PARSELONGFLOATOPT(optid, optindex, optname) \
     case optid:\
         if (sscanf(optarg, "%f", &floatopts[optindex].value) < 1)\
-        { log(DSPLogLevel_Fatal, "failed parsing option --" optname " (required float)"); return 1; }\
+        { log(DSPLogLevel_Fatal, "failed parsing option --" optname " (required float)"); return DSPModuleReturnCode_Stop; }\
         floatopts[optindex].has = true;\
         break;
 
 #define PARSELONGVEC3OPT(optid, optindex, optname) \
     case optid:\
         if (sscanf(optarg, "%f,%f,%f", &vec3opts[optindex].value[0], &vec3opts[optindex].value[1], &vec3opts[optindex].value[2]) < 3)\
-        { log(DSPLogLevel_Fatal, "failed parsing option --" optname " (required 3D vector - \"float, float, float\")"); return 1; }\
+        { log(DSPLogLevel_Fatal, "failed parsing option --" optname " (required 3D vector - \"float, float, float\")"); return DSPModuleReturnCode_Stop; }\
         vec3opts[optindex].has = true;\
         break;
 
@@ -106,7 +106,7 @@ struct vec3opt { bool has; float value[3]; } typedef vec3opt;
         {\
             log(DSPLogLevel_Fatal, "failed parsing option --" optname " (required boolean, allowed values: integer (where 0 - disable, other - enable), "\
                 "\"true\"/\"on\"/\"enable\"/\"yes\" or \"false\"/\"off\"/\"disable\"/no\")");\
-            return 1;\
+            return DSPModuleReturnCode_Stop;\
         }\
         intopts[optindex].has = true;\
         break;
