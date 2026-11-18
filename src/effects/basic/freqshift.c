@@ -31,7 +31,7 @@ static intopt intopts[2] = {0};
         else\
         {\
             log(DSPLogLevel_Fatal, "incorrect --" optname " enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")", optarg);\
-            return 1;\
+            return DSPModuleReturnCode_Stop;\
         }\
         intopts[optindex].has = true;\
         break;
@@ -43,7 +43,7 @@ static intopt intopts[2] = {0};
             if (json_object_object_get_ex(configroot, strname, &jobj))\
             {\
                 if (json_object_get_type(jobj) != json_type_string)\
-                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required string)"); return 1; }\
+                { log(DSPLogLevel_Fatal, "parsing \"" strname "\" config option failed (required string)"); return DSPModuleReturnCode_Stop; }\
                 \
                 const char *direction = json_object_get_string(jobj);\
                 if (strfcmpl(direction, "down")) alEffecti(effect, alname, AL_FREQUENCY_SHIFTER_DIRECTION_DOWN);\
@@ -53,14 +53,14 @@ static intopt intopts[2] = {0};
                 {\
                     log(DSPLogLevel_Fatal, "incorrect \"" strname "\" enumeration option value (allowed: \"down\", \"up\" or \"off\", got: \"%s\")",\
                         direction);\
-                    return 1;\
+                    return DSPModuleReturnCode_Stop;\
                 }\
             }\
-            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return 1; }\
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"" strname "\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }\
         }\
     }
 
-unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
+DSPModuleReturnCode effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -68,10 +68,10 @@ unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int opti
         PARSELONGDIROPT(257, 0, "leftDirection")
         PARSELONGDIROPT(258, 1, "rightDirection")
     }
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
-unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+DSPModuleReturnCode effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_FREQUENCY_SHIFTER);
 
@@ -91,7 +91,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 
     *sysname = "OALfreqshiftEffect";
     *dispname = "OpenAL Frequency Shifter Effect";
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
 #define PRINTDIROPT(optname, alname) \
