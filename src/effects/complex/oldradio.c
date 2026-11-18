@@ -20,14 +20,14 @@
 #include "alutil/general.h"
 #include "alutil/EFX.h"
 
-const unsigned short dspmodule_requiredAPIversion = 3;
+const unsigned short dspmodule_requiredAPIversion = 4;
 
 static float origgain = 1, effectgain = 1, inampmod = 0, involmod = 1, outampmod = 0, outvolmod = 1, noisevolume = 0.1;
 static void *inleftport, *inrightport, *outport;
 static ALuint source, buffer;
 static bool allowidlerenders = false, noisesquelch = true;
 
-unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
+DSPModuleReturnCode dspmodule_startup(const DSPLoaderAPI * restrict lapi, DSPModuleStartupFunctionOptions * restrict opts)
 {
     {
         int p;
@@ -37,7 +37,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
             { .name = "disableNoiseSquelch", .has_arg = no_argument, .val = 257, .flag = NULL },
             {0}
         };
-        while ((p = getopt_long(argc, argv, "a:A:v:V:i", longopts, NULL)) != -1)
+        while ((p = getopt_long(opts->argc, opts->argv, "a:A:v:V:i", longopts, NULL)) != -1)
         {
             switch (p)
             {
@@ -63,7 +63,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
                 case 256:
                     if (sscanf(optarg, "%f", &noisevolume) < 1)
-                    { lapi->log(DSPLogLevel_Fatal, "error parsing option --noiseVolume (required float)"); return 1; }
+                    { lapi->log(DSPLogLevel_Fatal, "error parsing option --noiseVolume (required float)"); return DSPModuleReturnCode_Stop; }
                     break;
 
                 case 257:
@@ -72,25 +72,25 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
                 parsefltshortoptfail:
                     lapi->log(DSPLogLevel_Fatal, "failed parsing option -%c (required float)", (char)p);
-                return 1;
+                return DSPModuleReturnCode_Stop;
             }
         }
     }
 
-    if (alutil_init(lapi->log, 48000, false, ALC_MONO_SOFT)) return 1;
+    if (alutil_init(lapi->log, 48000, false, ALC_MONO_SOFT)) return DSPModuleReturnCode_Stop;
     if (!alIsExtensionPresent("AL_SOFT_effect_target"))
-    { lapi->log(DSPLogLevel_Fatal, "required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return 1; }
-    if (alutil_loadEFX(lapi->log)) return 1;
+    { lapi->log(DSPLogLevel_Fatal, "required \"AL_SOFT_effect_target\" OpenAL extension doesn't supported on this platform"); return DSPModuleReturnCode_Stop; }
+    if (alutil_loadEFX(lapi->log)) return DSPModuleReturnCode_Stop;
 
     // ===============================
 
     if (!(inleftport = lapi->addport("input_left", NULL, DSPPortDirection_Input, 0)))
-    { lapi->log(DSPLogLevel_Fatal, "error adding port for input left channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for input left channel"); return DSPModuleReturnCode_Stop; }
     if (!(inrightport = lapi->addport("input_right", NULL, DSPPortDirection_Input, 0)))
-    { lapi->log(DSPLogLevel_Fatal, "error adding port for input right channel"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding port for input right channel"); return DSPModuleReturnCode_Stop; }
     
     if (!(outport = lapi->addport("output", NULL, DSPPortDirection_Output, 0)))
-    { lapi->log(DSPLogLevel_Fatal, "error adding mono-output port"); return 1; }
+    { lapi->log(DSPLogLevel_Fatal, "error adding mono-output port"); return DSPModuleReturnCode_Stop; }
     
     // ===============================
     
@@ -147,37 +147,37 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
         "effectprops:\n  noisesquelch: %s\n  noisevolume: %f",
         inampmod, involmod, outampmod, outvolmod, allowidlerenders ? "allowed" : "not allowed", noisesquelch ? "true" : "false", noisevolume);
 
-    *sysname = "OALoldradioEffect";
-    *dispname = "OpenAL Old Radio Effect";
-    return 0;
+    opts->sysname = "OALoldradioEffect";
+    opts->dispname = "OpenAL Old Radio Effect";
+    return DSPModuleReturnCode_Continue;
 }
 
 #define RNDF() (rand() / (float)RAND_MAX)
 #define RNDD() (rand() / (double)RAND_MAX)
 #define PI 3.14159265358979323846
 
-unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long position, unsigned long duration, unsigned long rate, unsigned long long nsectime)
+DSPModuleReturnCode dspmodule_process(const DSPLoaderAPI * restrict lapi, DSPModuleProcessFunctionOptions * restrict opts)
 {
-    float *out = lapi->getportbuffer(outport, duration);
-    if (!(allowidlerenders || out)) return 0;
+    float *out = lapi->getportbuffer(outport, opts->duration);
+    if (!(allowidlerenders || out)) return DSPModuleReturnCode_Continue;
     
-    const float *inleft = lapi->getportbuffer(inleftport, duration);
-    const float *inright = lapi->getportbuffer(inrightport, duration);
+    const float *inleft = lapi->getportbuffer(inleftport, opts->duration);
+    const float *inright = lapi->getportbuffer(inrightport, opts->duration);
 
     // ===============================
     
     alSourceRewind(source);
     alSourcei(source, AL_BUFFER, 0);
 
-    size_t buffsize = (duration + 1) * sizeof(float);
+    size_t buffsize = (opts->duration + 1) * sizeof(float);
     float buff[buffsize];
-    for (unsigned long i = 0; i < duration; i++)
+    for (unsigned long i = 0; i < opts->duration; i++)
     {
         float sig = adjf(((inleft ? inleft[i] : 0) + (inright ? inright[i] : 0)) * 0.5, inampmod) * involmod;
 
         // ===============================
 
-        double time = (position + i) / (double)rate;
+        double time = (opts->position + i) / (double)opts->rate;
         
         float noise = (
             (RNDF() * 2 - 1) * ((RNDF() < 0.01 ? 2 : 0) + 0.15) +
@@ -212,15 +212,15 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
         buff[i] = sig + noise * noisevolume;
     }
-    alBufferData(buffer, AL_FORMAT_MONO_FLOAT32, buff, buffsize, rate);
+    alBufferData(buffer, AL_FORMAT_MONO_FLOAT32, buff, buffsize, opts->rate);
 
     alSourcei(source, AL_BUFFER, buffer);
     alSourcePlay(source);
 
     // ===============================
 
-    if (alutil_render(lapi->log, buff, duration, rate)) return 1;
-    if (out) for (unsigned long i = 0; i < duration; i++) out[i] = adjf(buff[i], outampmod) * outvolmod;
+    if (alutil_render(lapi->log, buff, opts->duration, opts->rate)) return DSPModuleReturnCode_Stop;
+    if (out) for (unsigned long i = 0; i < opts->duration; i++) out[i] = adjf(buff[i], outampmod) * outvolmod;
 
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
