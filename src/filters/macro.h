@@ -19,7 +19,7 @@ struct floatopt { bool has; float value; } typedef floatopt;
 #define PARSELONGFLOATOPT(optid, optindex, optname) \
     case optid:\
         if (sscanf(optarg, "%f", &floatopts[optindex].value) < 1)\
-        { log(DSPLogLevel_Error, "error parsing option --" optname " (required float)"); return 1; }\
+        { log(DSPLogLevel_Error, "error parsing option --" optname " (required float)"); return DSPModuleReturnCode_Stop; }\
         floatopts[optindex].has = true;\
         break;
 

@@ -23,7 +23,7 @@ const struct option effect_longopts[] =
 static floatopt floatopts[2] = {0};
 static intopt intopts[1] = {0};
 
-unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
+DSPModuleReturnCode effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -38,15 +38,15 @@ unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int opti
             {
                 log(DSPLogLevel_Fatal, "incorrect --waveform enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")",
                     optarg);
-                return 1;
+                return DSPModuleReturnCode_Stop;
             }
             intopts[0].has = true;
             break;
     }
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
-unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+DSPModuleReturnCode effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_RING_MODULATOR);
 
@@ -63,7 +63,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
             if (json_object_object_get_ex(configroot, "waveform", &jobj))
             {
                 if (json_object_get_type(jobj) != json_type_string)
-                { log(DSPLogLevel_Fatal, "parsing \"waveform\" config option failed (required string)"); return 1; }
+                { log(DSPLogLevel_Fatal, "parsing \"waveform\" config option failed (required string)"); return DSPModuleReturnCode_Stop; }
 
                 const char *waveform = json_object_get_string(jobj);
                 if (strfcmpl(waveform, "sinusoid")) alEffecti(effect, AL_RING_MODULATOR_WAVEFORM, AL_RING_MODULATOR_SINUSOID);
@@ -73,10 +73,10 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
                 {
                     log(DSPLogLevel_Fatal, "incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\", \"sawtooth\" or \"square\", got: \"%s\")",
                         waveform);
-                    return 1;
+                    return DSPModuleReturnCode_Stop;
                 }
             }
-            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"waveform\" doesnt found in config file"); return 1; }
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"waveform\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }
         }
     }
 
@@ -87,7 +87,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 
     *sysname = "OALringmodEffect";
     *dispname = "OpenAL Ring Modulator Effect";
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
 void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)

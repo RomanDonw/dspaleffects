@@ -47,7 +47,7 @@ static floatopt floatopts[20] = {0};
 static intopt intopts[1] = {0};
 static vec3opt vec3opts[2] = {0};
 
-unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
+DSPModuleReturnCode effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -77,10 +77,10 @@ unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int opti
         PARSELONGVEC3OPT(277, 0, "reflectionsPan")
         PARSELONGVEC3OPT(278, 1, "lateReverbPan")
     }
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
-unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+DSPModuleReturnCode effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
 
@@ -143,7 +143,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 
     *sysname = "OALeaxreverbEffect";
     *dispname = "OpenAL EAX Reverb. Effect";
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
 void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)

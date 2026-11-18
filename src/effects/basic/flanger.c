@@ -26,7 +26,7 @@ const struct option effect_longopts[] =
 static floatopt floatopts[4] = {0};
 static intopt intopts[2] = {0};
 
-unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
+DSPModuleReturnCode effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -36,7 +36,8 @@ unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int opti
         PARSELONGFLOATOPT(259, 3, "rate")
 
         case 260:
-            if (sscanf(optarg, "%i", &intopts[0].value) < 1) { log(DSPLogLevel_Fatal, "error parsing option --phase (required integer)"); return 1; }
+            if (sscanf(optarg, "%i", &intopts[0].value) < 1)
+            { log(DSPLogLevel_Fatal, "error parsing option --phase (required integer)"); return DSPModuleReturnCode_Stop; }
             intopts[0].has = true;
             break;
 
@@ -46,15 +47,15 @@ unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int opti
             else
             {
                 log(DSPLogLevel_Fatal, "incorrect --waveform enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")", optarg);
-                return 1;
+                return DSPModuleReturnCode_Stop;
             }
             intopts[1].has = true;
             break;    
     }
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
-unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+DSPModuleReturnCode effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_FLANGER);
 
@@ -73,11 +74,11 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
             if (json_object_object_get_ex(configroot, "phase", &jobj))
             {
                 if (json_object_get_type(jobj) != json_type_int)
-                { log(DSPLogLevel_Fatal, "parsing \"phase\" config option failed (required int)"); return 1; }
+                { log(DSPLogLevel_Fatal, "parsing \"phase\" config option failed (required int)"); return DSPModuleReturnCode_Stop; }
 
                 alEffecti(effect, AL_FLANGER_PHASE, json_object_get_int(jobj));
             }
-            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"phase\" doesnt found in config file"); return 1; }
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"phase\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }
         }
 
         if (!intopts[1].has)
@@ -85,7 +86,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
             if (json_object_object_get_ex(configroot, "waveform", &jobj))
             {
                 if (json_object_get_type(jobj) != json_type_string)
-                { log(DSPLogLevel_Fatal, "parsing \"waveform\" config option failed (required string)"); return 1; }
+                { log(DSPLogLevel_Fatal, "parsing \"waveform\" config option failed (required string)"); return DSPModuleReturnCode_Stop; }
 
                 const char *waveform = json_object_get_string(jobj);
                 if (strfcmpl(waveform, "sinusoid")) alEffecti(effect, AL_FLANGER_WAVEFORM, AL_FLANGER_WAVEFORM_SINUSOID);
@@ -94,10 +95,10 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
                 {
                     log(DSPLogLevel_Fatal, "incorrect \"waveform\" enumeration option value (allowed: \"sinusoid\" or \"triangle\", got: \"%s\")",
                         waveform);
-                    return 1;
+                    return DSPModuleReturnCode_Stop;
                 }
             }
-            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"waveform\" doesnt found in config file"); return 1; }
+            else if (strongconfoptcheck) { log(DSPLogLevel_Fatal, "key \"waveform\" doesnt found in config file"); return DSPModuleReturnCode_Stop; }
         }
     }
 
@@ -111,7 +112,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 
     *sysname = "OALflangerEffect";
     *dispname = "OpenAL Flanger Effect";
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
 void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)

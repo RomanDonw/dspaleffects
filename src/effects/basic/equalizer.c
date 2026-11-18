@@ -29,7 +29,7 @@ const struct option effect_longopts[] =
 #include "macro.h"
 static floatopt floatopts[10] = {0};
 
-unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
+DSPModuleReturnCode effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
@@ -44,10 +44,10 @@ unsigned short effect_optcallback(DSPLoaderAPILogFunctionPrototype log, int opti
         PARSELONGFLOATOPT(264, 8, "highGain")
         PARSELONGFLOATOPT(265, 9, "highCutoff")
     }
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
-unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
+DSPModuleReturnCode effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const struct json_object *configroot, bool strongconfoptcheck, ALuint effect, const char **sysname, const char **dispname)
 {
     alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);
 
@@ -81,7 +81,7 @@ unsigned short effect_poststartup(DSPLoaderAPILogFunctionPrototype log, const st
 
     *sysname = "OALequalizerEffect";
     *dispname = "OpenAL Equalizer Effect";
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
 void effect_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint effect)
