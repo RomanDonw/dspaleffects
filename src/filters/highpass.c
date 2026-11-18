@@ -17,16 +17,16 @@ const struct option filter_longopts[] =
 #include "macro.h"
 static floatopt floatopts[1] = {0};
 
-unsigned short filter_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
+DSPModuleReturnCode filter_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid)
 {
     switch (optid)
     {
         PARSELONGFLOATOPT(256, 0, "gainLF")
     }
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
-unsigned short filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint filter, float filtergain, const char **sysname, const char **dispname)
+DSPModuleReturnCode filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint filter, float filtergain, const char **sysname, const char **dispname)
 {
     alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
     alFilterf(filter, AL_HIGHPASS_GAIN, filtergain);
@@ -35,7 +35,7 @@ unsigned short filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint f
 
     *sysname = "OALhighpassFilter";
     *dispname = "OpenAL Highpass Filter";
-    return 0;
+    return DSPModuleReturnCode_Continue;
 }
 
 void filter_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint filter)

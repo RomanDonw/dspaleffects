@@ -15,9 +15,9 @@
 
 extern const struct option filter_longopts[];
 
-extern unsigned short filter_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid);
+extern DSPModuleReturnCode filter_optcallback(DSPLoaderAPILogFunctionPrototype log, int optid);
 // [filter_poststartup]: configroot can be NULL.
-extern unsigned short filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint filter, float filtergain, const char **sysname, const char **dispname);
+extern DSPModuleReturnCode filter_poststartup(DSPLoaderAPILogFunctionPrototype log, ALuint filter, float filtergain, const char **sysname, const char **dispname);
 extern void filter_printprops(DSPLoaderAPILogFunctionPrototype log, ALuint filter);
 
 #endif
