@@ -17,7 +17,7 @@ const struct option effect_longopts[] =
     { .name = "lowCutoff", .has_arg = required_argument, .val = 257, .flag = NULL },
     { .name = "mid1Gain", .has_arg = required_argument, .val = 258, .flag = NULL },
     { .name = "mid1Center", .has_arg = required_argument, .val = 259, .flag = NULL },
-    { .name = "mid1width", .has_arg = required_argument, .val = 260, .flag = NULL },
+    { .name = "mid1Width", .has_arg = required_argument, .val = 260, .flag = NULL },
     { .name = "mid2Gain", .has_arg = required_argument, .val = 261, .flag = NULL },
     { .name = "mid2Center", .has_arg = required_argument, .val = 262, .flag = NULL },
     { .name = "mid2Width", .has_arg = required_argument, .val = 263, .flag = NULL },
